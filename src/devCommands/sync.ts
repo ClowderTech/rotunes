@@ -1,65 +1,84 @@
-const { SlashCommandBuilder, CommandInteraction, Collection, Message, REST, Routes } = require("discord.js")
+import { SlashCommandBuilder, CommandInteraction, Collection, Message, REST, Routes } from "discord.js"
 
-const { readdirSync } = require("fs");
+import { readdirSync } from "fs";
 
-module.exports = {
-    data: new SlashCommandBuilder()
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+
+const __filename = fileURLToPath(import.meta.url);
+
+const __dirname = dirname(__filename);
+
+function checkForValidFile(file: string) {
+    return file.split(".")[file.split(".").length - 1] === "js" || file.split(".")[file.split(".").length - 1] === "ts";
+}
+
+const data = new SlashCommandBuilder()
         .setName('sync')
-        .setDescription('Sync the bot\'s commands with the commands folder.'),
-    async execute(interaction: typeof CommandInteraction) {
-        const commands: Array<JSON> = [];
-        const devCommands: Array<JSON> = [];
+        .setDescription('Sync the bot\'s commands with the commands folder.');
 
-        const foldersPath = `${__dirname}/../commands`;
-        const commandFolders = readdirSync(foldersPath);
+async function execute(interaction: CommandInteraction) {
+    const commands: Array<JSON> = [];
+    const devCommands: Array<JSON> = [];
 
-        for (const folder of commandFolders) {
-            const commandFiles = readdirSync(`${foldersPath}/${folder}`).filter((file: string) => file.endsWith('.ts'));
-            for (const file of commandFiles) {
-                const command = require(`${foldersPath}/${folder}/${file}`);
-                if ('data' in command && 'execute' in command) {
-                    commands.push(command.data.toJSON());
-                } else {
-                    console.warn(`Warn: ${file} does not have the proper structure.`);
-                }
-            }
-        }
+    const foldersPath = `${__dirname}/../commands`;
+    const commandFolders = readdirSync(foldersPath);
 
-        const devFoldersPath = `${__dirname}/../devCommands`;
-        const devCommandFiles = readdirSync(devFoldersPath).filter((file: string) => file.endsWith('.ts'));
-
-        for (const file of devCommandFiles) {
-            const command = require(`${devFoldersPath}/${file}`);
+    for (const folder of commandFolders) {
+        const commandFiles = readdirSync(`${foldersPath}/${folder}`).filter(file => checkForValidFile(file));
+        for (const file of commandFiles) {
+            const command = await import(`${foldersPath}/${folder}/${file}`);
             if ('data' in command && 'execute' in command) {
-                devCommands.push(command.data.toJSON());
+                commands.push(command.data.toJSON());
             } else {
                 console.warn(`Warn: ${file} does not have the proper structure.`);
             }
         }
-
-        const rest = new REST().setToken(interaction.client.token);
-
-        (async () => {
-            try {
-                console.log('Started refreshing application (/) commands.');
-
-                await rest.put(
-                    Routes.applicationCommands(interaction.client.user.id),
-                    { body: commands },
-                );
-
-                await rest.put(
-                    Routes.applicationGuildCommands(interaction.client.user.id, '1185316093078802552'),
-                    { body: devCommands },
-                );
-
-                console.log('Successfully reloaded application (/) commands.');
-            }
-            catch (error) {
-                console.error(error);
-            }
-        })();
-
-        interaction.reply(`Synced ${commands.length + devCommands.length} commands.`);
     }
-}
+
+    const devFoldersPath = `${__dirname}/../devCommands`;
+    const devCommandFiles = readdirSync(devFoldersPath).filter(file => checkForValidFile(file));
+
+    for (const file of devCommandFiles) {
+        const command = await import(`${devFoldersPath}/${file}`);
+        if ('data' in command && 'execute' in command) {
+            devCommands.push(command.data.toJSON());
+        } else {
+            console.warn(`Warn: ${file} does not have the proper structure.`);
+        }
+    }
+
+    const rest = new REST().setToken(interaction.client.token);
+
+    (async () => {
+        try {
+            console.log('Started refreshing application (/) commands.');
+
+            await rest.put(
+                Routes.applicationCommands(interaction.client.user.id),
+                { body: commands },
+            );
+
+            await rest.put(
+                Routes.applicationGuildCommands(interaction.client.user.id, '1185316093078802552'),
+                { body: devCommands },
+            );
+
+            console.log('Successfully reloaded application (/) commands.');
+        }
+        catch (error) {
+            console.error(error);
+        }
+    })();
+
+    interaction.reply(`Synced ${commands.length + devCommands.length} commands.`);
+};
+
+export {
+    data,
+    execute
+};

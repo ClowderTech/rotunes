@@ -12,9 +12,14 @@ interface Command {
     execute: Function
 }
 
+interface Track {
+    spotifyTrack: SpotifyTrack;
+    requester: string;
+}
+
 class RoTunes extends Client {
     public commands: Collection<string, Command> = new Collection();
-    public queue_system: Map<string, SpotifyTrack[]> = new Map();
+    public queue_system: Map<string, Track[]> = new Map();
 }
 
 async function execute(interaction: CommandInteraction) {
@@ -54,34 +59,47 @@ async function execute(interaction: CommandInteraction) {
 
     if (spotify_data.type === "track") {
         const spotify_data_track: SpotifyTrack = spotify_data as SpotifyTrack;
+        const youtube_search_data = await search(`${spotify_data_track.name}`)
+        const track = {
+            spotifyTrack: spotify_data_track,
+            requester: member.id,
+        }
         if (!client.queue_system.get(guildID)) {
-            client.queue_system.set(guildID, [spotify_data_track]);
+            client.queue_system.set(guildID, []);
         } else {
-            client.queue_system.get(guildID)?.push(spotify_data_track)
+            client.queue_system.get(guildID)?.push(track)
         }
     } else if (spotify_data.type === "album") {
         const spotify_data_album: SpotifyAlbum = spotify_data as SpotifyAlbum;
         const all_tracks = await spotify_data_album.all_tracks()
         all_tracks.forEach(spotify_data_track => {
+            const track = {
+                spotifyTrack: spotify_data_track,
+                requester: member.id,
+            }
             if (!client.queue_system.get(guildID)) {
-                client.queue_system.set(guildID, [spotify_data_track]);
+                client.queue_system.set(guildID, [track]);
             } else {
-                client.queue_system.get(guildID)?.push(spotify_data_track);
+                client.queue_system.get(guildID)?.push(track);
             }
         });
     } else if (spotify_data.type === "playlist") {
         const spotify_data_playlist: SpotifyPlaylist = spotify_data as SpotifyPlaylist;
         const all_tracks = await spotify_data_playlist.all_tracks()
         all_tracks.forEach(spotify_data_track => {
+            const track = {
+                spotifyTrack: spotify_data_track,
+                requester: member.id,
+            }
             if (!client.queue_system.get(guildID)) {
-                client.queue_system.set(guildID, [spotify_data_track]);
+                client.queue_system.set(guildID, [track]);
             } else {
-                client.queue_system.get(guildID)?.push(spotify_data_track);
+                client.queue_system.get(guildID)?.push(track);
             }
         });
     }
 
-    await interaction.reply({content: `Queue: ${client.queue_system.get(guildID)}`, ephemeral: true})
+    await interaction.reply({content: `Test: ${client.queue_system.get(guildID)}`, ephemeral: true})
 }
 
 export {

@@ -8,7 +8,10 @@ WORKDIR /app
 COPY * ./
 
 # Install the dependencies
-RUN node install
+RUN npm install
+
+# Build the typescript file
+RUN npm run build
 
 # Run the index.ts file
-CMD ["node", "run", "src/index.ts"]
+CMD ["node", "run", "start"]

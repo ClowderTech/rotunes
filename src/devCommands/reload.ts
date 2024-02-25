@@ -1,6 +1,20 @@
 import { EmbedBuilder, CommandInteraction, SlashCommandBuilder, User, Team, Collection, type ErrorEvent, SlashCommandStringOption} from "discord.js";
 
 import { readdirSync } from "fs";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+
+const __filename = fileURLToPath(import.meta.url);
+
+const __dirname = dirname(__filename);
+
+function checkForValidFile(file: string) {
+    return file.split(".")[file.split(".").length - 1] === "js" || file.split(".")[file.split(".").length - 1] === "ts";
+}
 
 const data = new SlashCommandBuilder()
         .setName('reload')
@@ -28,9 +42,9 @@ async function execute(interaction: CommandInteraction) {
     const commandFolders = readdirSync(foldersPath);
 
     for (const folder of commandFolders) {
-        const commandFiles = readdirSync(`${foldersPath}/${folder}`).filter((file: string) => file.endsWith('.ts'));
+        const commandFiles = readdirSync(`${foldersPath}/${folder}`).filter(file => checkForValidFile(file));
         for (const file of commandFiles) {
-            const command = require(`${foldersPath}/${folder}/${file}`);
+            const command = await import(`${foldersPath}/${folder}/${file}`);
             if ('data' in command && 'execute' in command) {
                 if (commandName === command.data.name) {
                     delete require.cache[require.resolve(`${foldersPath}/${folder}/${file}`)];
@@ -52,10 +66,10 @@ async function execute(interaction: CommandInteraction) {
     }
 
     const devFoldersPath = `${__dirname}/../devCommands`;
-    const devCommandFiles = readdirSync(devFoldersPath).filter((file: string) => file.endsWith('.ts'));
+    const devCommandFiles = readdirSync(devFoldersPath).filter(file => checkForValidFile(file));
 
     for (const file of devCommandFiles) {
-        const command = require(`${devFoldersPath}/${file}`);
+        const command = await import(`${devFoldersPath}/${file}`);
         if ('data' in command && 'execute' in command) {
             if (commandName === command.data.name) {
                 delete require.cache[require.resolve(`${devFoldersPath}/${file}`)];
