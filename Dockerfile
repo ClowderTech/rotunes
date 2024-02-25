@@ -14,4 +14,4 @@ RUN npm install
 RUN npm run build
 
 # Run the index.ts file
-CMD ["node", "run", "start"]
+CMD ["npm", "run", "start"]
