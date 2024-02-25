@@ -8,6 +8,12 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 
 import { createRequire } from "module";
+import { Kazagumo } from "kazagumo";
+import { Connectors } from "shoukaku";
+
+if (!process.env.TOKEN || !process.env.LAVALINK_HOST || !process.env.LAVALINK_PASSWORD) {
+    config();
+}
 
 const require = createRequire(import.meta.url);
 
@@ -25,12 +31,13 @@ interface Track {
     requester: string;
 }
 
-class RoTunes extends Client {
-    public commands: Collection<string, Command> = new Collection();
-    public queue_system: Map<string, Track[]> = new Map();
+
+interface ClientExtended extends Client {
+    commands: Collection<string, Command>;
+    kazagumo: Kazagumo;
 }
 
-const client: RoTunes = new RoTunes(
+const client: ClientExtended = new Client(
     {
         intents: [
             GatewayIntentBits.AutoModerationConfiguration, 
@@ -52,9 +59,27 @@ const client: RoTunes = new RoTunes(
             GatewayIntentBits.GuildWebhooks, 
             GatewayIntentBits.Guilds,
             GatewayIntentBits.MessageContent
-        ]
+        ],
     }
-);
+) as ClientExtended;
+
+const nodes = [{
+    name: "main",
+    url: process.env.LAVALINK_HOST!,
+    auth: process.env.LAVALINK_PASSWORD!,
+    secure: true
+}];
+
+client.commands = new Collection();
+client.kazagumo = new Kazagumo({
+    defaultSearchEngine: "youtube",
+    send: (guildID, packet) => {
+        const guild = client.guilds.cache.get(guildID);
+        if (guild) {
+            guild.shard.send(packet);
+        }
+    }
+}, new Connectors.DiscordJS(client), nodes);
 
 const commandsPath = `${__dirname}/commands`;
 const commandFolders = readdirSync(commandsPath);
@@ -177,7 +202,5 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
         })();
     }
 });
-
-config();
 
 client.login(process.env.TOKEN);

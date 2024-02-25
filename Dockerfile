@@ -1,11 +1,11 @@
 # Use the official Node.js image as the base image
-FROM node:latest
+FROM node:lts
 
 # Set the working directory inside the container
 WORKDIR /app
 
 # Copy the application code to the working directory
-COPY * ./
+COPY . /app
 
 # Install the dependencies
 RUN npm install

@@ -1,6 +1,7 @@
-import { joinVoiceChannel, type DiscordGatewayAdapterImplementerMethods, type DiscordGatewayAdapterLibraryMethods } from "@discordjs/voice";
+import { joinVoiceChannel, type DiscordGatewayAdapterImplementerMethods, type DiscordGatewayAdapterLibraryMethods, createAudioResource, createAudioPlayer, NoSubscriberBehavior } from "@discordjs/voice";
 import { SlashCommandStringOption, SlashCommandBuilder, CommandInteraction, GuildMember, MembershipScreeningFieldType, Client, Collection } from "discord.js"
-import { SpotifyAlbum, SpotifyPlaylist, SpotifyTrack, is_expired, refreshToken, search, sp_validate, spotify } from "play-dl";
+import { Kazagumo } from "kazagumo";
+import { SpotifyAlbum, SpotifyPlaylist, SpotifyTrack, is_expired, refreshToken, search, sp_validate, spotify, stream } from "play-dl";
 
 const data =  new SlashCommandBuilder()
     .setName('play')
@@ -12,24 +13,19 @@ interface Command {
     execute: Function
 }
 
-interface Track {
-    spotifyTrack: SpotifyTrack;
-    requester: string;
-}
-
-class RoTunes extends Client {
-    public commands: Collection<string, Command> = new Collection();
-    public queue_system: Map<string, Track[]> = new Map();
+interface ClientExtended extends Client {
+    commands: Collection<string, Command>;
+    kazagumo: Kazagumo;
 }
 
 async function execute(interaction: CommandInteraction) {
-    const client: RoTunes = interaction.client as RoTunes;
+    let client: ClientExtended = interaction.client as ClientExtended;
     if (!interaction.guild) {
         await interaction.reply({content: "You must use this in a server.", ephemeral: true});
         return;
     }
-    const guildID = interaction.guild.id
-    const member: GuildMember = <GuildMember>interaction.member;
+    let guildID = interaction.guild.id
+    let member: GuildMember = <GuildMember>interaction.member;
     if (!member.voice) {
         await interaction.reply({content: "You are not in a voice channel.", ephemeral: true});
         return;
@@ -38,68 +34,49 @@ async function execute(interaction: CommandInteraction) {
         await interaction.reply({content: "You are not in a voice channel.", ephemeral: true});
         return;
     }
-    const connection = joinVoiceChannel({
-        channelId: member.voice.channel.id,
-        guildId: member.guild.id,
-        adapterCreator: interaction.guild.voiceAdapterCreator
+
+    let player = await client.kazagumo.getPlayer(guildID);
+    if (!player) {
+        player = await client.kazagumo.createPlayer({
+            guildId: guildID,
+            voiceId: member.voice.channel.id,
+            volume: 50,
+        });
+    }
+
+    let song = <string>interaction.options.get("song", true).value;
+
+    let playable = await player.search(song, {
+        requester: interaction.user.id,
     });
 
-    if (is_expired()) {
-        await refreshToken();
-    }
-
-    const lookable = <string>interaction.options.get("song", true).value;
-
-    if (!sp_validate(lookable)) {
-        await interaction.reply({content: "This is not a valid search term or spotify url.", ephemeral: true});
-        return;
-    }
-
-    const spotify_data = await spotify(lookable);
-
-    if (spotify_data.type === "track") {
-        const spotify_data_track: SpotifyTrack = spotify_data as SpotifyTrack;
-        const youtube_search_data = await search(`${spotify_data_track.name}`)
-        const track = {
-            spotifyTrack: spotify_data_track,
-            requester: member.id,
-        }
-        if (!client.queue_system.get(guildID)) {
-            client.queue_system.set(guildID, []);
+    if (playable.type === "TRACK") {
+        if (player.queue.length === 0 && !player.playing) {
+            player.play(playable.tracks[0]);
         } else {
-            client.queue_system.get(guildID)?.push(track)
+            player.queue.push(playable.tracks[0]);
         }
-    } else if (spotify_data.type === "album") {
-        const spotify_data_album: SpotifyAlbum = spotify_data as SpotifyAlbum;
-        const all_tracks = await spotify_data_album.all_tracks()
-        all_tracks.forEach(spotify_data_track => {
-            const track = {
-                spotifyTrack: spotify_data_track,
-                requester: member.id,
+    } else if (playable.type === "PLAYLIST") {
+        playable.tracks.forEach(track => {
+            if (!player) {
+                return;
             }
-            if (!client.queue_system.get(guildID)) {
-                client.queue_system.set(guildID, [track]);
+            if (player.queue.length === 0 && !player.playing) {
+                player.play(track);
             } else {
-                client.queue_system.get(guildID)?.push(track);
+                player.queue.push(track);
             }
         });
-    } else if (spotify_data.type === "playlist") {
-        const spotify_data_playlist: SpotifyPlaylist = spotify_data as SpotifyPlaylist;
-        const all_tracks = await spotify_data_playlist.all_tracks()
-        all_tracks.forEach(spotify_data_track => {
-            const track = {
-                spotifyTrack: spotify_data_track,
-                requester: member.id,
-            }
-            if (!client.queue_system.get(guildID)) {
-                client.queue_system.set(guildID, [track]);
-            } else {
-                client.queue_system.get(guildID)?.push(track);
-            }
-        });
+    } else if (playable.type === "SEARCH") {
+        if (player.queue.length === 0 && !player.playing) {
+            player.play(playable.tracks[0]);
+        } else {
+            player.queue.push(playable.tracks[0]);
+        }
     }
 
-    await interaction.reply({content: `Test: ${client.queue_system.get(guildID)}`, ephemeral: true})
+
+    await interaction.reply({content: `Queued song: \`${playable.tracks[0].title}\``, ephemeral: true})
 }
 
 export {

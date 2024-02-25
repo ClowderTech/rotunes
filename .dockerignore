@@ -15,4 +15,5 @@ helm-charts
 .idea
 coverage*
 config.json
-.env
+dist
+.data

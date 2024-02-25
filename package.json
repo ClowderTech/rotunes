@@ -14,6 +14,9 @@
     "@discordjs/voice": "^0.16.1",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
-    "play-dl": "^1.9.7"
+    "kazagumo": "^3.0.1",
+    "play-dl": "^1.9.7",
+    "shoukaku": "^4.0.1",
+    "sodium": "^3.0.2"
   }
 }
