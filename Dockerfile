@@ -1,5 +1,5 @@
 # Use the official Node.js image as the base image
-FROM oven/bun:1
+FROM node:latest
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY * ./
 
 # Install the dependencies
-RUN bun install
+RUN node install
 
 # Run the index.ts file
-CMD ["bun", "run", "src/index.ts"]
+CMD ["node", "run", "src/index.ts"]

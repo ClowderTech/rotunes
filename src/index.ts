@@ -1,10 +1,21 @@
-import { Events, Client, GatewayIntentBits, Collection, REST, Routes, type Interaction, CommandInteraction } from "discord.js";
+import { Events, Client, GatewayIntentBits, Collection, REST, Routes, type Interaction, CommandInteraction, SlashCommandBuilder } from "discord.js";
 
 import { readdirSync } from "fs";
 
 import { config } from "dotenv";
+import { SpotifyTrack } from "play-dl";
 
-const client: any = new Client(
+interface Command {
+    data: SlashCommandBuilder;
+    execute: Function
+}
+
+class RoTunes extends Client {
+    public commands: Collection<string, Command> = new Collection();
+    public queue_system: Map<string, SpotifyTrack[]> = new Map();
+}
+
+const client: RoTunes = new RoTunes(
     {
         intents: [
             GatewayIntentBits.AutoModerationConfiguration, 
@@ -30,9 +41,7 @@ const client: any = new Client(
     }
 );
 
-client.commands = new Collection();
-
-const commandsPath = `./commands`;
+const commandsPath = `${__dirname}/commands`;
 const commandFolders = readdirSync(commandsPath);
 
 for (const folder of commandFolders) {
@@ -47,7 +56,7 @@ for (const folder of commandFolders) {
     }
 }
 
-const devCommandsPath = `./devCommands`;
+const devCommandsPath = `${__dirname}/devCommands`;
 const devCommandsFiles = readdirSync(devCommandsPath).filter(file => file.endsWith('.ts'));
 
 for (const file of devCommandsFiles) {
@@ -59,7 +68,7 @@ for (const file of devCommandsFiles) {
     }
 }
 
-const eventsPath = `./events`;
+const eventsPath = `${__dirname}/events`;
 const eventFiles = readdirSync(eventsPath).filter(file => file.endsWith('.ts'));
 
 for (const file of eventFiles) {
@@ -98,7 +107,7 @@ client.once(Events.ClientReady, (readyClient: Client) => {
         const commands: Array<JSON> = [];
         const devCommands: Array<JSON> = [];
 
-        const commandsPath = `./commands`;
+        const commandsPath = `${__dirname}/commands`;
         const commandFolders = readdirSync(commandsPath);
 
         for (const folder of commandFolders) {
@@ -113,7 +122,7 @@ client.once(Events.ClientReady, (readyClient: Client) => {
             }
         }
 
-        const devCommandsPath = `./devCommands`;
+        const devCommandsPath = `${__dirname}/devCommands`;
         const devCommandsFiles = readdirSync(devCommandsPath).filter((file: string) => file.endsWith('.ts'));
 
         for (const file of devCommandsFiles) {
@@ -125,19 +134,19 @@ client.once(Events.ClientReady, (readyClient: Client) => {
             }
         }
 
-        const rest = new REST().setToken(client.token);
+        const rest = new REST().setToken(client.token!);
 
         (async () => {
             try {
                 console.log('Started refreshing application (/) commands.');
 
                 await rest.put(
-                    Routes.applicationCommands(client.user.id),
+                    Routes.applicationCommands(client.user!.id),
                     { body: commands },
                 );
 
                 await rest.put(
-                    Routes.applicationGuildCommands(client.user.id, '1185316093078802552'),
+                    Routes.applicationGuildCommands(client.user!.id, '1185316093078802552'),
                     { body: devCommands },
                 );
 
