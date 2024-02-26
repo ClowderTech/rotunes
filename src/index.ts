@@ -9,10 +9,13 @@ import { dirname } from "path";
 
 import { createRequire } from "module";
 import { Kazagumo } from "kazagumo";
-import { Connectors } from "shoukaku";
+import { Connectors, Player } from "shoukaku";
+import { MoonlinkManager } from "moonlink.js";
 
-if (!process.env.TOKEN || !process.env.LAVALINK_HOST || !process.env.LAVALINK_PASSWORD) {
-    config();
+config({override: true});
+if (!process.env.TOKEN || !process.env.LAVALINK_HOST || !process.env.LAVALINK_PASSWORD || !process.env.LAVALINK_PORT) {
+    console.error("Please provide a token, lavalink host, and lavalink password in a .env file or as environment variables.");
+    process.exit(1);
 }
 
 const require = createRequire(import.meta.url);
@@ -34,7 +37,7 @@ interface Track {
 
 interface ClientExtended extends Client {
     commands: Collection<string, Command>;
-    kazagumo: Kazagumo;
+    moonlink: MoonlinkManager;
 }
 
 const client: ClientExtended = new Client(
@@ -63,23 +66,29 @@ const client: ClientExtended = new Client(
     }
 ) as ClientExtended;
 
-const nodes = [{
-    name: "main",
-    url: process.env.LAVALINK_HOST!,
-    auth: process.env.LAVALINK_PASSWORD!,
-    secure: true
-}];
-
 client.commands = new Collection();
-client.kazagumo = new Kazagumo({
-    defaultSearchEngine: "youtube",
-    send: (guildID, packet) => {
-        const guild = client.guilds.cache.get(guildID);
-        if (guild) {
-            guild.shard.send(packet);
+
+client.moonlink = new MoonlinkManager(
+    [
+        {
+            host: process.env.LAVALINK_HOST,
+            port: Number(process.env.LAVALINK_PORT),
+            secure: true,
+            password: process.env.LAVALINK_PASSWORD,
         }
+    ],
+    {
+        autoResume: true,
+    },
+    (guildID: any, sPayload: any) => {
+        client.guilds.cache.get(guildID)!.shard.send(JSON.parse(sPayload));
     }
-}, new Connectors.DiscordJS(client), nodes);
+);
+
+// Event: Node created
+client.moonlink.on("nodeCreate", node => {
+    console.log(`${node.host} was connected, and the magic is in the air`);
+});
 
 const commandsPath = `${__dirname}/commands`;
 const commandFolders = readdirSync(commandsPath);
@@ -147,6 +156,9 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 
 client.once(Events.ClientReady, async (readyClient: Client) => {
     console.log(`Logged in as ${readyClient.user?.tag}!`);
+
+    client.moonlink.init(readyClient.user?.id);
+
     if (readyClient.application?.commands.holds.length === 0) {
         const commands: Array<JSON> = [];
         const devCommands: Array<JSON> = [];
@@ -201,6 +213,10 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
             }
         })();
     }
+});
+
+client.on(Events.Raw, (packet: any) => {
+    client.moonlink.packetUpdate(packet);
 });
 
 client.login(process.env.TOKEN);

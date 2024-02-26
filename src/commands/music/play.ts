@@ -1,6 +1,7 @@
 import { joinVoiceChannel, type DiscordGatewayAdapterImplementerMethods, type DiscordGatewayAdapterLibraryMethods, createAudioResource, createAudioPlayer, NoSubscriberBehavior } from "@discordjs/voice";
 import { SlashCommandStringOption, SlashCommandBuilder, CommandInteraction, GuildMember, MembershipScreeningFieldType, Client, Collection } from "discord.js"
 import { Kazagumo } from "kazagumo";
+import { MoonlinkManager } from "moonlink.js";
 import { SpotifyAlbum, SpotifyPlaylist, SpotifyTrack, is_expired, refreshToken, search, sp_validate, spotify, stream } from "play-dl";
 
 const data =  new SlashCommandBuilder()
@@ -15,7 +16,7 @@ interface Command {
 
 interface ClientExtended extends Client {
     commands: Collection<string, Command>;
-    kazagumo: Kazagumo;
+    moonlink: MoonlinkManager;
 }
 
 async function execute(interaction: CommandInteraction) {
@@ -35,48 +36,66 @@ async function execute(interaction: CommandInteraction) {
         return;
     }
 
-    let player = await client.kazagumo.getPlayer(guildID);
+    if (!interaction.channel) {
+        await interaction.reply({content: "You must use this in a server.", ephemeral: true});
+        return;
+    }
+
+    let player = await client.moonlink.players.get(guildID);
     if (!player) {
-        player = await client.kazagumo.createPlayer({
+        let channel = member.voice.channel;
+        player = await client.moonlink.players.create({
             guildId: guildID,
-            voiceId: member.voice.channel.id,
+            voiceChannel: channel.id,
+            textChannel: interaction.channel.id,
+            autoPlay: false,
             volume: 50,
+        });
+    }
+
+    if (!player.connected) {
+        let channel = member.voice.channel;
+        player.connect({
+            setDeaf: true,
+            setMute: false,
         });
     }
 
     let song = <string>interaction.options.get("song", true).value;
 
-    let playable = await player.search(song, {
+    let playable = await client.moonlink.search({
+        query: song,
+        source: "youtube",
         requester: interaction.user.id,
     });
 
-    if (playable.type === "TRACK") {
-        if (player.queue.length === 0 && !player.playing) {
-            player.play(playable.tracks[0]);
-        } else {
-            player.queue.push(playable.tracks[0]);
-        }
-    } else if (playable.type === "PLAYLIST") {
+    if (playable.loadType === "empty") {
+        await interaction.reply({content: "No matches found.", ephemeral: true});
+        return;
+    } else if (playable.loadType === "error") {
+        await interaction.reply({content: "Failed to load the song.", ephemeral: true});
+        return;
+    }
+
+    if (playable.loadType === "track") {
+        player.queue.add(playable.tracks[0]);
+        await interaction.reply({content: `Queued song: \`${playable.tracks[0].title}\``})
+    } else if (playable.loadType === "playlist") {
         playable.tracks.forEach(track => {
             if (!player) {
                 return;
             }
-            if (player.queue.length === 0 && !player.playing) {
-                player.play(track);
-            } else {
-                player.queue.push(track);
-            }
+            player.queue.add(track);
         });
-    } else if (playable.type === "SEARCH") {
-        if (player.queue.length === 0 && !player.playing) {
-            player.play(playable.tracks[0]);
-        } else {
-            player.queue.push(playable.tracks[0]);
-        }
+        await interaction.reply({content: `Queued playlist: \`${playable.playlistInfo?.name}\``, ephemeral: true})
+    } else if (playable.loadType === "search") {
+        player.queue.add(playable.tracks[0]);
+        await interaction.reply({content: `Queued song: \`${playable.tracks[0].title}\``})
     }
 
-
-    await interaction.reply({content: `Queued song: \`${playable.tracks[0].title}\``, ephemeral: true})
+    if (!player.playing) {
+        player.play();
+    }
 }
 
 export {
