@@ -1,10 +1,10 @@
 import { EmbedBuilder, CommandInteraction, SlashCommandBuilder, User, Team, TeamMember} from "discord.js";
 
-const data = new SlashCommandBuilder()
+export const data = new SlashCommandBuilder()
         .setName('debug')
         .setDescription('Show useful information about the bot.');
 
-async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: CommandInteraction) {
     const embed: EmbedBuilder = new EmbedBuilder()
         .setTitle('Debug Information')
         .setColor(0x00ff00)
@@ -20,13 +20,11 @@ async function execute(interaction: CommandInteraction) {
             value: '0.1.0'
         }, {
             name: 'Bot Owner',
+            value: '<@!1208479777900470344>'
+        }, {
+            name: 'Bot Developers',
             value: '<@!501480264640364544>'
         });
 
     await interaction.reply({ embeds: [embed]});
-};
-
-export {
-    data,
-    execute
 };

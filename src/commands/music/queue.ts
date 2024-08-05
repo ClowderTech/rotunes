@@ -1,35 +1,52 @@
 import { EmbedBuilder, CommandInteraction, SlashCommandBuilder, User, Team, TeamMember, Collection, Client} from "discord.js";
-import { MoonlinkManager } from "moonlink.js";
+import { MoonlinkManager, MoonlinkTrack } from "moonlink.js";
+import { ClientExtended, UserMadeError } from "../../classes.js";
 
-interface Command {
-    data: SlashCommandBuilder;
-    execute: Function
-}
-
-interface ClientExtended extends Client {
-    commands: Collection<string, Command>;
-    moonlink: MoonlinkManager;
-}
-
-const data = new SlashCommandBuilder()
+export const data = new SlashCommandBuilder()
         .setName('queue')
         .setDescription('Show the current and next up songs.');
 
-async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: CommandInteraction) {
     let client: ClientExtended = interaction.client as ClientExtended;
     if (!interaction.guild) {
-        await interaction.reply({content: "You must use this in a server.", ephemeral: true});
-        return;
+        throw new UserMadeError("You must use this in a server.");
     }
     let guildID = interaction.guild.id
-    let player = await client.moonlink.players.get(guildID);
+    let player = client.moonlink.players.get(guildID);
     if (!player) {
-        await interaction.reply({content: "No songs are currently playing.", ephemeral: true});
-        return;
+        throw new UserMadeError("No songs are currently playing.");
     }
-};
 
-export {
-    data,
-    execute
+    let queue = player.queue;
+
+    const elapsed = Date.now() - player.current.time;
+    const calculatedPosition = player.current.position + elapsed;
+
+    let addon_title = "";
+
+    if (player.current.isStream) {
+        addon_title += " (Live)";
+    }
+
+    if (player.loop == 1) {
+        addon_title += " (Looping)";
+    }
+
+    if (player.loop == 2) {
+        addon_title += " (Looping Queue)";
+    }
+
+    let embed = new EmbedBuilder()
+        .setTitle("Queue".concat(addon_title))
+        .setColor("#2b2d31")
+        .setTimestamp()
+        .setDescription(`**Now Playing:**\n[${player.current.title}](${player.current.url}) (requested by <@!${player.current.requester}>) (duration: ${Math.floor(calculatedPosition / 1000)}/${Math.floor(player.current.duration / 1000)}s)`);
+
+    if (queue.size > 0) {
+        let next = queue.all.slice(0, 5);
+        let nextString = next.map((song: MoonlinkTrack, index: number) => `${index + 1}. [${song.title}](${song.url}) (requested by <@!${song.requester}>)`).join("\n");
+        embed.addFields({name: "Next up:", value: nextString.concat(queue.size > 5 ? `\n... and ${queue.size - 5} more` : "")});
+    }
+
+    await interaction.reply({embeds: [embed]});
 };

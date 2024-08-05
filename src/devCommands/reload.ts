@@ -16,12 +16,12 @@ function checkForValidFile(file: string) {
     return file.split(".")[file.split(".").length - 1] === "js" || file.split(".")[file.split(".").length - 1] === "ts";
 }
 
-const data = new SlashCommandBuilder()
+export const data = new SlashCommandBuilder()
         .setName('reload')
         .setDescription('Hot reload a command.')
         .addStringOption((option: SlashCommandStringOption) => option.setName('command').setDescription('The command to reload.').setRequired(true));
 
-async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: CommandInteraction) {
     if (!("commands" in interaction.client)) {
         await interaction.reply({ content: "The bot is not ready to reload commands.", ephemeral: true });
         return;
@@ -88,9 +88,4 @@ async function execute(interaction: CommandInteraction) {
             }
         }
     }
-};
-
-export {
-    data,
-    execute
 };

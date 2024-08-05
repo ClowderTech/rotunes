@@ -1,104 +1,120 @@
 import { joinVoiceChannel, type DiscordGatewayAdapterImplementerMethods, type DiscordGatewayAdapterLibraryMethods, createAudioResource, createAudioPlayer, NoSubscriberBehavior } from "@discordjs/voice";
-import { SlashCommandStringOption, SlashCommandBuilder, CommandInteraction, GuildMember, MembershipScreeningFieldType, Client, Collection } from "discord.js"
-import { Kazagumo } from "kazagumo";
+import { SlashCommandStringOption, SlashCommandBuilder, CommandInteraction, GuildMember, MembershipScreeningFieldType, Client, Collection, EmbedBuilder } from "discord.js"
 import { MoonlinkManager } from "moonlink.js";
-import { SpotifyAlbum, SpotifyPlaylist, SpotifyTrack, is_expired, refreshToken, search, sp_validate, spotify, stream } from "play-dl";
+import { ClientExtended, UserMadeError } from "../../classes.js";
 
-const data =  new SlashCommandBuilder()
+export const data =  new SlashCommandBuilder()
     .setName('play')
     .setDescription('Play the given song in your current voice call.')
     .addStringOption((option: SlashCommandStringOption) => option.setName("song").setDescription("The song name or url to play.").setRequired(true));
-  
-interface Command {
-    data: SlashCommandBuilder;
-    execute: Function
-}
 
-interface ClientExtended extends Client {
-    commands: Collection<string, Command>;
-    moonlink: MoonlinkManager;
-}
-
-async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: CommandInteraction) {
     let client: ClientExtended = interaction.client as ClientExtended;
     if (!interaction.guild) {
-        await interaction.reply({content: "You must use this in a server.", ephemeral: true});
-        return;
+        throw new UserMadeError("You must use this in a server.");
+    }
+    if (!interaction.channel) {
+        throw new UserMadeError("You must use this in a server.");
     }
     let guildID = interaction.guild.id
     let member: GuildMember = <GuildMember>interaction.member;
     if (!member.voice) {
-        await interaction.reply({content: "You are not in a voice channel.", ephemeral: true});
-        return;
+        throw new UserMadeError("You are not in a voice channel.");
     }
     if (!member.voice.channel) {
-        await interaction.reply({content: "You are not in a voice channel.", ephemeral: true});
-        return;
+        throw new UserMadeError("You are not in a voice channel.");
+    }
+    if (!member.voice.channel.joinable && !member.voice.channel.permissionsFor(client.user!.id)?.has("Speak")) {
+        throw new UserMadeError("I cannot join the voice channel.");
+    }
+    if (!member.voice.channel.members.get(client.user!.id) && interaction.guild.members.cache.get(client.user!.id)!.voice.channel) {
+        throw new UserMadeError("I am in another voice channel.");
     }
 
-    if (!interaction.channel) {
-        await interaction.reply({content: "You must use this in a server.", ephemeral: true});
-        return;
-    }
-
-    let player = await client.moonlink.players.get(guildID);
+    let player = client.moonlink.players.get(guildID);
     if (!player) {
         let channel = member.voice.channel;
-        player = await client.moonlink.players.create({
+        player = client.moonlink.players.create({
             guildId: guildID,
             voiceChannel: channel.id,
             textChannel: interaction.channel.id,
-            autoPlay: false,
-            volume: 50,
+            volume: 100,
+            autoPlay: true,
+            autoLeave: true,
         });
     }
 
+    // player.setAutoLeave(true);
+    // player.setAutoPlay(false);
+
     if (!player.connected) {
-        let channel = member.voice.channel;
         player.connect({
-            setDeaf: true,
+            setDeaf: false,
             setMute: false,
         });
     }
 
     let song = <string>interaction.options.get("song", true).value;
 
+    const spotify_regex = RegExp(/https:\/\/open\.spotify\.com\/(track|album|artist|playlist)\/([a-zA-Z0-9]+)/);
+    const youtube_regex = RegExp(/(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[a-zA-Z0-9_-]+(\?t=\d+s)?/);
+
+    let source;
+
+    if (spotify_regex.test(song)) {
+        source = "spsearch";
+    } else if (youtube_regex.test(song)) {
+        source = "youtube";
+    } else {
+        source = "spsearch";
+    }
+
+    await interaction.deferReply();
+
     let playable = await client.moonlink.search({
         query: song,
-        source: "youtube",
+        source: source,
         requester: interaction.user.id,
     });
 
     if (playable.loadType === "empty") {
-        await interaction.reply({content: "No matches found.", ephemeral: true});
-        return;
+        throw new UserMadeError("No songs were found.");
     } else if (playable.loadType === "error") {
-        await interaction.reply({content: "Failed to load the song.", ephemeral: true});
-        return;
+        throw new Error("An error occurred while searching for the song.")
     }
 
     if (playable.loadType === "track") {
-        player.queue.add(playable.tracks[0]);
-        await interaction.reply({content: `Queued song: \`${playable.tracks[0].title}\``})
+        player.queue.push(playable.tracks[0]);
+        let embed = new EmbedBuilder()
+            .setTitle("Queued song")
+            .setDescription(`Queued song: \`${playable.tracks[0].title}\``)
+            .setColor("#2b2d31")
+            .setTimestamp()
+        await interaction.followUp({embeds: [embed]})
     } else if (playable.loadType === "playlist") {
-        playable.tracks.forEach(track => {
+        for (let track of playable.tracks) {
             if (!player) {
                 return;
             }
-            player.queue.add(track);
-        });
-        await interaction.reply({content: `Queued playlist: \`${playable.playlistInfo?.name}\``, ephemeral: true})
+            player.queue.push(track);
+        };
+        let embed = new EmbedBuilder()
+            .setTitle("Queued playlist")
+            .setDescription(`Queued playlist: \`${playable.playlistInfo?.name}\``)
+            .setColor("#2b2d31")
+            .setTimestamp()
+        await interaction.followUp({embeds: [embed]})
     } else if (playable.loadType === "search") {
-        player.queue.add(playable.tracks[0]);
-        await interaction.reply({content: `Queued song: \`${playable.tracks[0].title}\``})
+        player.queue.push(playable.tracks[0]);
+        let embed = new EmbedBuilder()
+            .setTitle("Queued song")
+            .setDescription(`Queued song: \`${playable.tracks[0].title}\``)
+            .setColor("#2b2d31")
+            .setTimestamp()
+        await interaction.followUp({embeds: [embed]});
     }
 
-    if (!player.playing) {
+    if (!player.playing && !player.current) {
         player.play();
     }
-}
-
-export {
-    data,
-    execute
 };
