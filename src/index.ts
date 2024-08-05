@@ -11,8 +11,8 @@ import { type ClientExtended, UserMadeError } from "./classes.ts";
 import { promises as fsPromises, read } from 'fs';
 
 config({override: true});
-if (!process.env.TOKEN || !process.env.LAVALINK_HOST || !process.env.LAVALINK_PASSWORD || !process.env.LAVALINK_PORT || !process.env.MONGODB_URI || !process.env.OPENAI_API_KEY || !process.env.OPENAI_ORG_ID) {
-    console.error("Please provide a token, lavalink host, lavalink password, mongodb uri, openai api key and organization id in a .env file or as environment variables.");
+if (!process.env.TOKEN || !process.env.LAVALINK_HOST || !process.env.LAVALINK_PASSWORD || !process.env.LAVALINK_PORT || !process.env.MONGODB_URI) {
+    console.error("Please provide a token, lavalink host, lavalink password, and mongodb uri in a .env file or as environment variables.");
     process.exit(1);
 }
 // if (!process.env.TOKEN) {
