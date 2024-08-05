@@ -1,23 +1,24 @@
-import { Events, Client, GatewayIntentBits, Collection, REST, Routes, Interaction, CommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
-
-import { readdirSync } from "fs";
+import { Events, Client, GatewayIntentBits, Collection, REST, Routes, type Interaction, CommandInteraction, SlashCommandBuilder, EmbedBuilder, ApplicationCommand, type RESTGetAPIApplicationCommandsResult } from "discord.js";
 
 import { config } from "dotenv";
 import { fileURLToPath, pathToFileURL } from "url";
 import { dirname, join } from "path";
 
-import { createRequire } from "module";
-import { MoonlinkManager } from "moonlink.js";
+import { MoonlinkManager, MoonlinkPlayer, type TrackData, type TrackDataInfo, type TrackInfo } from "moonlink.js";
 
-import { ClientExtended, UserMadeError } from "./classes.js";
+import { type ClientExtended, UserMadeError } from "./classes.ts";
+
+import { promises as fsPromises, read } from 'fs';
 
 config({override: true});
-if (!process.env.TOKEN || !process.env.LAVALINK_HOST || !process.env.LAVALINK_PASSWORD || !process.env.LAVALINK_PORT) {
-    console.error("Please provide a token, lavalink host, and lavalink password in a .env file or as environment variables.");
+if (!process.env.TOKEN || !process.env.LAVALINK_HOST || !process.env.LAVALINK_PASSWORD || !process.env.LAVALINK_PORT || !process.env.MONGODB_URI || !process.env.OPENAI_API_KEY || !process.env.OPENAI_ORG_ID) {
+    console.error("Please provide a token, lavalink host, lavalink password, mongodb uri, openai api key and organization id in a .env file or as environment variables.");
     process.exit(1);
 }
-
-const require = createRequire(import.meta.url);
+// if (!process.env.TOKEN) {
+//     console.error("Please provide a token in a .env file or as environment variables.");
+//     process.exit(1);
+// }
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -34,7 +35,8 @@ const client: ClientExtended = new Client(
             GatewayIntentBits.GuildEmojisAndStickers, 
             GatewayIntentBits.GuildIntegrations, 
             GatewayIntentBits.GuildInvites, 
-            GatewayIntentBits.GuildMembers, 
+            GatewayIntentBits.GuildMembers,
+            GatewayIntentBits.GuildMessagePolls,
             GatewayIntentBits.GuildMessageReactions, 
             GatewayIntentBits.GuildMessageTyping, 
             GatewayIntentBits.GuildMessages, 
@@ -49,15 +51,13 @@ const client: ClientExtended = new Client(
     }
 ) as ClientExtended;
 
-client.commands = new Collection();
-
 client.moonlink = new MoonlinkManager(
     [
         {
-            host: process.env.LAVALINK_HOST,
+            host: process.env.LAVALINK_HOST!,
             port: Number(process.env.LAVALINK_PORT),
             secure: true,
-            password: process.env.LAVALINK_PASSWORD,
+            password: process.env.LAVALINK_PASSWORD!,
         }
     ],
     {
@@ -77,50 +77,111 @@ client.moonlink.on("nodeError", (node, error) => {
     console.error(`Node ${node.host} emitted an error: ${error}`);
 });
 
-const commandsPath = join(__dirname, "commands");
-const commandFolders = readdirSync(commandsPath);
+client.moonlink.on("trackError", (player: MoonlinkPlayer, track: TrackDataInfo) => {
+    console.error(`Track ${track.title} emitted an error`);
+    player.restart();
+});
 
-function checkForValidFile(file: string) {
-    return file.split(".")[file.split(".").length - 1] === "js" || file.split(".")[file.split(".").length - 1] === "ts";
+client.moonlink.on("trackEnd", (player: MoonlinkPlayer, track: TrackDataInfo) => {
+    if (player.queue.size === 0 && !player.current) {
+        player.disconnect();
+    }
+});
+
+client.moonlink.on("queueEnd", (player: MoonlinkPlayer) => {
+    player.disconnect();
+});
+
+
+
+client.commands = new Collection();
+
+// client.moonlink = new MoonlinkManager(
+//     [
+//         {
+//             host: process.env.LAVALINK_HOST,
+//             port: Number(process.env.LAVALINK_PORT),
+//             secure: true,
+//             password: process.env.LAVALINK_PASSWORD,
+//         }
+//     ],
+//     {
+//         autoResume: true,
+//     },
+//     (guildID: any, sPayload: any) => {
+//         client.guilds.cache.get(guildID)!.shard.send(JSON.parse(sPayload));
+//     }
+// );
+
+// // Event: Node created
+// client.moonlink.on("nodeCreate", node => {
+//     console.log(`${node.host} was connected, and the magic is in the air`);
+// });
+
+// client.moonlink.on("nodeError", (node, error) => {
+//     console.error(`Node ${node.host} emitted an error: ${error}`);
+// });
+
+// Check if file is valid JS or TS file
+function checkForValidFile(file: string): boolean {
+    const fileExtension = file.split(".").pop();
+    return fileExtension === "js" || fileExtension === "ts";
 }
 
-for (const folder of commandFolders) {
-    const commandFiles = readdirSync(join(commandsPath, folder)).filter(file => checkForValidFile(file));
+// Asynchronously read files in a directory recursively
+async function getAllFiles(dirPath: string): Promise<string[]> {
+    const entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
+    const files = await Promise.all(entries.map(async (entry) => {
+        const fullPath = join(dirPath, entry.name);
+        return entry.isDirectory() ? getAllFiles(fullPath) : [fullPath];
+    }));
+    return files.flat();
+}
+
+// Load commands from a directory and return them as an array of JSON
+async function loadCommands(commandsPath: string): Promise<Record<string, any>[]> {
+    const commandFiles = await getAllFiles(commandsPath);
+    const commands = [];
     for (const file of commandFiles) {
-        const command = await import(join(commandsPath, folder, file));
-        if ('data' in command && 'execute' in command) {
-            client.commands.set(command.data.name, command);
+        if (checkForValidFile(file)) {
+            const command = await import(file);
+            if ('data' in command && 'execute' in command) {
+                client.commands.set(command.data.name, command);
+                commands.push(command.data.toJSON());
+            } else {
+                console.warn(`Warn: ${file} does not have the proper structure.`);
+            }
+        }
+    }
+    return commands;
+}
+
+// Load events from a directory
+async function loadEvents(eventsPath: string) {
+    const eventFiles = await getAllFiles(eventsPath);
+    for (const file of eventFiles) {
+        const event = await import(file);
+        if (event.once) {
+            client.once(event.eventType, (...args: any) => event.execute(...args));
         } else {
-            console.warn(`Warn: ${file} does not have the proper structure.`);
+            client.on(event.eventType, (...args: any) => event.execute(...args));
         }
     }
 }
 
+const commandsPath = join(__dirname, "commands");
 const devCommandsPath = join(__dirname, "devCommands");
-const devCommandsFiles = readdirSync(devCommandsPath).filter(file => checkForValidFile(file));
-
-for (const file of devCommandsFiles) {
-    const command = await import(join(devCommandsPath, file));
-    if ('data' in command && 'execute' in command) {
-        client.commands.set(command.data.name, command);
-    } else {
-        console.warn(`Warn: ${file} does not have the proper structure.`);
-    }
-}
-
 const eventsPath = join(__dirname, "events");
-const eventFiles = readdirSync(eventsPath).filter(file => checkForValidFile(file));
 
-for (const file of eventFiles) {
-	const event = await import(join(eventsPath, file));
-	if (event.once) {
-		client.once(event.eventType, (...args: any) => event.execute(...args));
-	} else {
-		client.on(event.eventType, (...args: any) => event.execute(...args));
-	}
+// Load all commands and events
+async function loadAll() {
+    await loadCommands(commandsPath);
+    await loadCommands(devCommandsPath);
+    await loadEvents(eventsPath);
+    console.log('Commands and events successfully loaded!');
 }
 
-
+loadAll().catch(console.error);
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     if (!interaction.isCommand()) return;
@@ -163,75 +224,64 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 client.once(Events.ClientReady, async (readyClient: Client) => {
     console.log(`Logged in as ${readyClient.user?.tag}!`);
 
-    client.moonlink.init(readyClient.user?.id);
+    const rest = new REST().setToken(client.token!);
 
-    if (readyClient.application?.commands.holds.length === 0) {
-        const commands: Array<JSON> = [];
-        const devCommands: Array<JSON> = [];
+    let commands = await readyClient.application?.commands.fetch();
+    let devCommands = await readyClient.application?.commands.fetch({ guildId: "1185316093078802552" });
+    let commandsName = commands?.map((command: ApplicationCommand) => command.name);
+    let devCommandsName = devCommands?.map((command: ApplicationCommand) => command.name);
+    let allCommands = commandsName?.concat(devCommandsName!)!;
+    let registeredCommands = await rest.get(Routes.applicationCommands(readyClient.user!.id)) as RESTGetAPIApplicationCommandsResult;
 
+    if (allCommands.length === registeredCommands.length && allCommands.every((command => registeredCommands.find(registeredCommand => registeredCommand.name === command)))) {
         const commandsPath = join(__dirname, "commands");
-        const commandFolders = readdirSync(commandsPath);
-
-        for (const folder of commandFolders) {
-            const commandFiles = readdirSync(join(commandsPath, folder)).filter(file => checkForValidFile(file));
-            for (const file of commandFiles) {
-                const command = await import(join(commandsPath, folder, file));
-                if ('data' in command && 'execute' in command) {
-                    commands.push(command.data.toJSON());
-                } else {
-                    console.warn(`Warn: ${file} does not have the proper structure.`);
-                }
-            }
-        }
-
         const devCommandsPath = join(__dirname, "devCommands");
-        const devCommandsFiles = readdirSync(devCommandsPath).filter(file => checkForValidFile(file));
 
-        for (const file of devCommandsFiles) {
-            const command = await import(join(devCommandsPath, file));
-            if ('data' in command && 'execute' in command) {
-                devCommands.push(command.data.toJSON());
-            } else {
-                console.warn(`Warn: ${file} does not have the proper structure.`);
-            }
+        const commands = await loadCommands(commandsPath);
+        const devCommands = await loadCommands(devCommandsPath);
+
+        try {
+            console.log('Started refreshing application (/) commands.');
+
+            await rest.put(
+                Routes.applicationCommands(client.user!.id),
+                { body: commands },
+            );
+
+            await rest.put(
+                Routes.applicationGuildCommands(client.user!.id, '1185316093078802552'),
+                { body: devCommands },
+            );
+
+            console.log('Successfully reloaded application (/) commands.');
+        } catch (error) {
+            console.error(error);
         }
-
-        const rest = new REST().setToken(client.token!);
-
-        (async () => {
-            try {
-                console.log('Started refreshing application (/) commands.');
-
-                await rest.put(
-                    Routes.applicationCommands(client.user!.id),
-                    { body: commands },
-                );
-
-                await rest.put(
-                    Routes.applicationGuildCommands(client.user!.id, '1185316093078802552'),
-                    { body: devCommands },
-                );
-
-                console.log('Successfully reloaded application (/) commands.');
-            }
-            catch (error) {
-                console.error(error);
-            }
-        })();
     }
+
+    client.moonlink.init(client.user?.id);
 });
+
+client.login(process.env.TOKEN);
 
 client.on(Events.Raw, (packet: any) => {
     client.moonlink.packetUpdate(packet);
 });
 
-function stopEvent(code: any) {
-    console.log(`Shutting down with code ${code}.`);
-    client.user?.setStatus("invisible");
-    client.destroy();
+function gracefulShutdown() {
+    console.log("Received shutdown signal, closing Discord client...");
+    client.destroy()
+        .then(() => {
+            console.log("Discord client closed.");
+            process.exit(0);
+        })
+        .catch(err => {
+            console.error("Error closing Discord client:", err);
+            process.exit(1);
+        });
 }
 
-process.addListener("SIGINT", stopEvent);
-process.addListener("SIGTERM", stopEvent);
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
 
 client.login(process.env.TOKEN);

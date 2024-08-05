@@ -1,19 +1,20 @@
 {
   "name": "rotunes",
-  "main": "./src/index.ts",
+  "main": "src/index.ts",
   "type": "module",
-  "scripts": {
-    "build": "tsc",
-    "start": "node ./dist/index.js"
-  },
   "devDependencies": {
-    "@types/node": "^20.11.20",
-    "typescript": "^5.3.3"
+    "@types/bun": "latest",
+    "@types/node": "^20.14.14",
+    "@types/jsdom": "^21.1.7",
+    "@types/dotenv": "^8.2.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.5.3"
   },
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
-    "discord.js": "^14.14.1",
+    "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
-    "moonlink.js": "^3.6.0"
+    "moonlink.js": "^3.6.64"
   }
 }

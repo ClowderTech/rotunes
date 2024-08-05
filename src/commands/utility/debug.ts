@@ -23,7 +23,7 @@ export async function execute(interaction: CommandInteraction) {
             value: '<@!1208479777900470344>'
         }, {
             name: 'Bot Developers',
-            value: '<@!501480264640364544>'
+            value: '<@!1250923829761675336>'
         });
 
     await interaction.reply({ embeds: [embed]});

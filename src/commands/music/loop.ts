@@ -1,6 +1,6 @@
 import { EmbedBuilder, CommandInteraction, SlashCommandBuilder, User, Team, TeamMember, Collection, Client, SlashCommandIntegerOption, GuildMember} from "discord.js";
 import { MoonlinkManager, MoonlinkTrack } from "moonlink.js";
-import { ClientExtended, UserMadeError } from "../../classes.js";
+import { type ClientExtended, UserMadeError } from "../../classes";
 
 export const data = new SlashCommandBuilder()
         .setName('loop')

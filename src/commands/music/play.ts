@@ -1,7 +1,7 @@
 import { joinVoiceChannel, type DiscordGatewayAdapterImplementerMethods, type DiscordGatewayAdapterLibraryMethods, createAudioResource, createAudioPlayer, NoSubscriberBehavior } from "@discordjs/voice";
 import { SlashCommandStringOption, SlashCommandBuilder, CommandInteraction, GuildMember, MembershipScreeningFieldType, Client, Collection, EmbedBuilder } from "discord.js"
 import { MoonlinkManager } from "moonlink.js";
-import { ClientExtended, UserMadeError } from "../../classes.js";
+import { type ClientExtended, UserMadeError } from "../../classes";
 
 export const data =  new SlashCommandBuilder()
     .setName('play')
@@ -59,21 +59,11 @@ export async function execute(interaction: CommandInteraction) {
     const spotify_regex = RegExp(/https:\/\/open\.spotify\.com\/(track|album|artist|playlist)\/([a-zA-Z0-9]+)/);
     const youtube_regex = RegExp(/(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[a-zA-Z0-9_-]+(\?t=\d+s)?/);
 
-    let source;
-
-    if (spotify_regex.test(song)) {
-        source = "spsearch";
-    } else if (youtube_regex.test(song)) {
-        source = "youtube";
-    } else {
-        source = "spsearch";
-    }
-
     await interaction.deferReply();
 
     let playable = await client.moonlink.search({
         query: song,
-        source: source,
+        source: "spsearch",
         requester: interaction.user.id,
     });
 
@@ -89,6 +79,7 @@ export async function execute(interaction: CommandInteraction) {
             .setTitle("Queued song")
             .setDescription(`Queued song: \`${playable.tracks[0].title}\``)
             .setColor("#2b2d31")
+            .setThumbnail(playable.tracks[0].artworkUrl)
             .setTimestamp()
         await interaction.followUp({embeds: [embed]})
     } else if (playable.loadType === "playlist") {
@@ -102,6 +93,7 @@ export async function execute(interaction: CommandInteraction) {
             .setTitle("Queued playlist")
             .setDescription(`Queued playlist: \`${playable.playlistInfo?.name}\``)
             .setColor("#2b2d31")
+            .setThumbnail(playable.tracks[0].artworkUrl)
             .setTimestamp()
         await interaction.followUp({embeds: [embed]})
     } else if (playable.loadType === "search") {
@@ -110,6 +102,7 @@ export async function execute(interaction: CommandInteraction) {
             .setTitle("Queued song")
             .setDescription(`Queued song: \`${playable.tracks[0].title}\``)
             .setColor("#2b2d31")
+            .setThumbnail(playable.tracks[0].artworkUrl)
             .setTimestamp()
         await interaction.followUp({embeds: [embed]});
     }

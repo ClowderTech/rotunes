@@ -1,6 +1,6 @@
 import { EmbedBuilder, CommandInteraction, SlashCommandBuilder, User, Team, TeamMember, Collection, Client} from "discord.js";
 import { MoonlinkManager, MoonlinkTrack } from "moonlink.js";
-import { ClientExtended, UserMadeError } from "../../classes.js";
+import { type ClientExtended, UserMadeError } from "../../classes";
 
 export const data = new SlashCommandBuilder()
         .setName('queue')
@@ -37,9 +37,10 @@ export async function execute(interaction: CommandInteraction) {
     }
 
     let embed = new EmbedBuilder()
-        .setTitle("Queue".concat(addon_title))
+        .setTitle(`Queue${addon_title} (${(player.queue.size + (player.playing ? 1 : 0))} song(s))`)
         .setColor("#2b2d31")
         .setTimestamp()
+        .setThumbnail(player.current.artworkUrl)
         .setDescription(`**Now Playing:**\n[${player.current.title}](${player.current.url}) (requested by <@!${player.current.requester}>) (duration: ${Math.floor(calculatedPosition / 1000)}/${Math.floor(player.current.duration / 1000)}s)`);
 
     if (queue.size > 0) {

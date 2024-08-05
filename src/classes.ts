@@ -1,5 +1,5 @@
 import { Client, Collection, SlashCommandBuilder } from "discord.js";
-import { MoonlinkManager } from "moonlink.js";
+import type { MoonlinkManager } from "moonlink.js";
 
 export interface Command {
     data: SlashCommandBuilder;
