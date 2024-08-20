@@ -4,13 +4,11 @@ import { config } from "dotenv";
 import { fileURLToPath, pathToFileURL } from "url";
 import { dirname, join } from "path";
 
-import { Connectors, Shoukaku } from "shoukaku";
-
-import { Kazagumo } from "kazagumo";
 
 import { type ClientExtended, UserMadeError } from "./classes.ts";
 
 import { promises as fsPromises, read } from 'fs';
+import { Manager, type INode } from "moonlink.js";
 
 config({override: true});
 if (!process.env.TOKEN || !process.env.LAVALINK_HOST || !process.env.LAVALINK_PASSWORD || !process.env.MONGODB_URI) {
@@ -53,48 +51,34 @@ const client: ClientExtended = new Client(
     }
 ) as ClientExtended;
 
-let nodes = [
-    {
-        name: "main",
-        url: process.env.LAVALINK_HOST,
-        auth: process.env.LAVALINK_PASSWORD,
-        secure: true,
-    }
-];
-
-client.kazagumo = new Kazagumo({
-    defaultSearchEngine: "youtube_music",
-    send: (guildId: string, payload: any) => {
-        const guild = client.guilds.cache.get(guildId);
-        if (guild) guild.shard.send(payload);
+client.moonlink = new Manager({
+    nodes: [
+        {
+            host: process.env.LAVALINK_HOST!,
+            port: Number(process.env.LAVALINK_PORT),
+            secure: true,
+            password: process.env.LAVALINK_PASSWORD!,
+            retryDelay: 5000,
+            retryAmount: 1000000000000
+        }
+    ],
+    options: {
     },
-}, new Connectors.DiscordJS(client), nodes, {
-    resumeByLibrary: true,
-    reconnectInterval: 1,
-    reconnectTries: 1000000000000,
-    moveOnDisconnect: true,
-    resumeTimeout: 30,
-    restTimeout: 60,
-    voiceConnectionTimeout: 60,
+    sendPayload: (guildID: any, sPayload: any) => {
+        client.guilds.cache.get(guildID)!.shard.send(JSON.parse(sPayload));
+    }
+}
+);
+
+// Event: Node created
+client.moonlink.on("nodeCreate", (node: INode) => {
+    console.log(`${node.host} was connected, and the magic is in the air`);
 });
 
-
-client.kazagumo.shoukaku.on('ready', (name) => console.log(`Lavalink ${name}: Ready!`));
-client.kazagumo.shoukaku.on('error', (name, error) => console.error(`Lavalink ${name}: Error Caught,`, error));
-client.kazagumo.shoukaku.on('close', (name, code, reason) => console.warn(`Lavalink ${name}: Closed, Code ${code}, Reason ${reason || 'No reason'}`));
-client.kazagumo.shoukaku.on('debug', (name, info) => console.debug(`Lavalink ${name}: Debug,`, info));
-client.kazagumo.shoukaku.on('disconnect', (name, count) => {
-    const players = [...client.kazagumo.shoukaku.players.values()].filter(p => p.node.name === name);
-    players.map(player => {
-        client.kazagumo.destroyPlayer(player.guildId);
-        player.destroy();
-    });
-    console.warn(`Lavalink ${name}: Disconnected`);
+client.moonlink.on("nodeError", (node: INode, error: Error) => {
+    console.error(`Node ${node.host} emitted an error: ${error}`);
 });
 
-client.kazagumo.on("playerEmpty", player => {
-    player.destroy();
-});
 
 client.commands = new Collection();
 
@@ -260,6 +244,8 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
             console.error(error);
         }
     }
+
+    client.moonlink.init(client.user!.id);
 });
 
 function gracefulShutdown() {

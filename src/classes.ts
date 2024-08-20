@@ -1,5 +1,5 @@
 import { Client, Collection, SlashCommandBuilder } from "discord.js";
-import { Kazagumo } from "kazagumo";
+import type { Manager } from "moonlink.js";
 
 export interface Command {
     data: SlashCommandBuilder;
@@ -8,7 +8,7 @@ export interface Command {
 
 export interface ClientExtended extends Client {
     commands: Collection<string, Command>;
-    kazagumo: Kazagumo;
+    moonlink: Manager;
 }
 
 export class UserMadeError extends Error {
