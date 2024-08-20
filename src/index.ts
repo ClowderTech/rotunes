@@ -248,6 +248,10 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
     client.moonlink.init(client.user!.id);
 });
 
+client.on(Events.Raw, (packet: any) => {
+    client.moonlink.packetUpdate(packet);
+});
+
 function gracefulShutdown() {
     console.log("Received shutdown signal, closing Discord client...");
     client.destroy()
