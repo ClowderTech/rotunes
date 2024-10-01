@@ -28,8 +28,11 @@ import { MongoClient } from "mongodb";
 import { promises as fsPromises } from "node:fs";
 
 import * as mod from "node:process";
+import { config } from "dotenv";
 import { join } from "node:path";
 import { prettyExpGain } from "./utils/leveling.ts";
+
+config({ override: true });
 
 const client: ClientExtended = new Client({
 	intents: [
