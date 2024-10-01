@@ -1,8 +1,8 @@
-import { promises as fsPromises } from 'fs';
-import { join } from 'path';
+import { promises as fsPromises } from 'node:fs';
+import { join } from 'node:path';
 import { SlashCommandBuilder, SlashCommandStringOption } from '@discordjs/builders';
-import { CommandInteraction, Collection, REST, Routes } from 'discord.js';
-import type { ClientExtended } from '../classes';
+import { ChatInputCommandInteraction } from 'discord.js';
+import type { ClientExtended } from '../utils/classes.ts';
 
 const checkForValidFile = (file: string): boolean => {
     const fileExtension = file.split(".").pop();
@@ -11,7 +11,7 @@ const checkForValidFile = (file: string): boolean => {
 
 const getAllFiles = async (dirPath: string): Promise<string[]> => {
     const entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
-    const files = await Promise.all(entries.map(async (entry) => {
+    const files = await Promise.all(entries.map((entry) => {
         const fullPath = join(dirPath, entry.name);
         return entry.isDirectory() ? getAllFiles(fullPath) : [fullPath];
     }));
@@ -27,16 +27,8 @@ export const data = new SlashCommandBuilder()
             .setRequired(true)
     );
 
-export async function execute(interaction: CommandInteraction) {
-    if (!("commands" in interaction.client)) {
-        await interaction.reply({ content: "The bot is not ready to reload commands.", ephemeral: true });
-        return;
-    } else if (!(interaction.client.commands instanceof Collection)) {
-        await interaction.reply({ content: "The bot is not ready to reload commands.", ephemeral: true });
-        return;
-    }
-
-    let client = interaction.client as ClientExtended;
+export async function execute(interaction: ChatInputCommandInteraction) {
+    const client = interaction.client as ClientExtended;
 
     const commandName = interaction.options.get('command', true).value as string;
     const command = client.commands.get(commandName);
@@ -56,16 +48,19 @@ export async function execute(interaction: CommandInteraction) {
                 const command = await import(file);
                 if ('data' in command && 'execute' in command) {
                     if (commandName === command.data.name) {
-                        delete require.cache[require.resolve(file)];
                         try {
                             client.commands.delete(command.data.name);
                             const newCommand = await import(file);
                             client.commands.set(newCommand.data.name, newCommand);
                             await interaction.reply(`Command \`${newCommand.data.name}\` was reloaded!`);
                             return true;
-                        } catch (error: any) {
+                        } catch (error) {
                             console.error(error);
-                            await interaction.reply(`There was an error while reloading a command \`${command.data.name}\`:\n\`\`\`${error.message}\`\`\``);
+                            if (error instanceof Error) {
+                                await interaction.reply(`There was an error while reloading a command \`${command.data.name}\`:\n\`\`\`${error.message}\`\`\``);
+                            } else {
+                                await interaction.reply(`There was an error while reloading a command \`${commandName}\`:\n\`${error}\``);
+                            }
                             return false;
                         }
                     }

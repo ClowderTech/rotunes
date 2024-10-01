@@ -1,7 +1,7 @@
 import { promises as fsPromises } from 'fs';
 import { join } from 'path';
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { CommandInteraction, REST, Routes } from 'discord.js';
+import { ChatInputCommandInteraction, CommandInteraction, REST, Routes } from 'discord.js';
 
 const checkForValidFile = (file: string): boolean => {
     const fileExtension = file.split(".").pop();
@@ -37,7 +37,7 @@ export const data = new SlashCommandBuilder()
     .setName('sync')
     .setDescription('Sync the bot\'s commands with the commands folder.');
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
     try {
         const commandsPath = join(__dirname, "..", "commands");
         const devCommandsPath = join(__dirname, "..", "devCommands");

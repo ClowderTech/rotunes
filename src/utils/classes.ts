@@ -1,13 +1,15 @@
-import { Client, Collection, SlashCommandBuilder } from "discord.js";
+import { Client, Collection, SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import type { MongoClient } from "mongodb";
 import type { Manager } from "moonlink.js";
 
 export interface Command {
     data: SlashCommandBuilder;
-    execute: Function
+    execute: (interaction: ChatInputCommandInteraction) => void
 }
 
 export interface ClientExtended extends Client {
     commands: Collection<string, Command>;
+    mongoclient: MongoClient;
     moonlink: Manager;
 }
 
@@ -22,8 +24,6 @@ export class UserMadeError extends Error {
         Object.setPrototypeOf(this, UserMadeError.prototype);
 
         this.message = message;
-
-        this.stack = this.stack;
 
         this.name = "UserMadeError";
     }

@@ -1,13 +1,13 @@
-import { EmbedBuilder, CommandInteraction, SlashCommandBuilder, User, Team, TeamMember} from "discord.js";
+import { EmbedBuilder, CommandInteraction, SlashCommandBuilder, User, Team, TeamMember, ChatInputCommandInteraction} from "discord.js";
 
 export const data = new SlashCommandBuilder()
         .setName('debug')
         .setDescription('Show useful information about the bot.');
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
     const embed: EmbedBuilder = new EmbedBuilder()
         .setTitle('Debug Information')
-        .setColor(0x00ff00)
+        .setColor("#2b2d31")
         .setTimestamp()
         .addFields({
             name: 'Bot Latency',
