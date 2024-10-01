@@ -205,26 +205,31 @@ export async function prettyExpGain(
 
 		const member = guild?.members.cache.get(user.id);
 
-		if (newLevel < 10) {
-			await member?.roles.remove(level10Role!).catch();
-			await member?.roles.remove(level20Role!).catch();
-			await member?.roles.remove(level40Role!).catch();
-			await member?.roles.remove(level60Role!).catch();
-		} else if (newLevel < 20) {
-			await member?.roles.add(level10Role!).catch();
-			await member?.roles.add(level20Role!).catch();
-			await member?.roles.remove(level40Role!).catch();
-			await member?.roles.remove(level60Role!).catch();
-		} else if (newLevel < 40) {
-			await member?.roles.add(level10Role!).catch();
-			await member?.roles.add(level20Role!).catch();
-			await member?.roles.add(level40Role!).catch();
-			await member?.roles.remove(level60Role!).catch();
-		} else if (newLevel < 60) {
+		if (newLevel >= 60) {
 			await member?.roles.add(level10Role!).catch();
 			await member?.roles.add(level20Role!).catch();
 			await member?.roles.add(level40Role!).catch();
 			await member?.roles.add(level60Role!).catch();
+		} else if (newLevel >= 40) {
+			await member?.roles.add(level10Role!).catch();
+			await member?.roles.add(level20Role!).catch();
+			await member?.roles.add(level40Role!).catch();
+			await member?.roles.remove(level60Role!).catch();
+		} else if (newLevel >= 20) {
+			await member?.roles.add(level10Role!).catch();
+			await member?.roles.add(level20Role!).catch();
+			await member?.roles.remove(level40Role!).catch();
+			await member?.roles.remove(level60Role!).catch();
+		} else if (newLevel >= 10) {
+			await member?.roles.add(level10Role!).catch();
+			await member?.roles.remove(level20Role!).catch();
+			await member?.roles.remove(level40Role!).catch();
+			await member?.roles.remove(level60Role!).catch();
+		} else {
+			await member?.roles.remove(level10Role!).catch();
+			await member?.roles.remove(level20Role!).catch();
+			await member?.roles.remove(level40Role!).catch();
+			await member?.roles.remove(level60Role!).catch();
 		}
 	}
 }
