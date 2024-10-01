@@ -427,8 +427,8 @@ async function getVoiceChannelMembers(guild: Guild) {
 		) {
 			for (const member of channel.members.values()) {
 				if (
-					!member.voice.deaf ||
-					!member.voice.mute ||
+					!member.voice.deaf &&
+					!member.voice.mute &&
 					!(member.voice.channelId === member.guild.afkChannelId)
 				) {
 					await prettyExpGain(client, member.user);

@@ -195,5 +195,36 @@ export async function prettyExpGain(
 		} catch (error) {
 			console.error(`Could not send DM to ${user.username}:`, error);
 		}
+
+		const guild = client.guilds.cache.get("601117178896580608")
+
+		const level10Role = guild?.roles.cache.find(role => role.id === "1203119410982690906");
+		const level20Role = guild?.roles.cache.find(role => role.id === "1203119407749013574");
+		const level40Role = guild?.roles.cache.find(role => role.id === "1203119402527105074");
+		const level60Role = guild?.roles.cache.find(role => role.id === "1203119393370939412");
+
+		const member = guild?.members.cache.get(user.id);
+
+		if (newLevel < 10) {
+			await member?.roles.remove(level10Role!).catch();
+			await member?.roles.remove(level20Role!).catch();
+			await member?.roles.remove(level40Role!).catch();
+			await member?.roles.remove(level60Role!).catch();
+		} else if (newLevel < 20) {
+			await member?.roles.add(level10Role!).catch();
+			await member?.roles.add(level20Role!).catch();
+			await member?.roles.remove(level40Role!).catch();
+			await member?.roles.remove(level60Role!).catch();
+		} else if (newLevel < 40) {
+			await member?.roles.add(level10Role!).catch();
+			await member?.roles.add(level20Role!).catch();
+			await member?.roles.add(level40Role!).catch();
+			await member?.roles.remove(level60Role!).catch();
+		} else if (newLevel < 60) {
+			await member?.roles.add(level10Role!).catch();
+			await member?.roles.add(level20Role!).catch();
+			await member?.roles.add(level40Role!).catch();
+			await member?.roles.add(level60Role!).catch();
+		}
 	}
 }
