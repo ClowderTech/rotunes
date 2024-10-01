@@ -1,5 +1,5 @@
 # Use the latest Node.js LTS image
-FROM node:lts
+FROM denoland/deno:debian
 
 # Set the working directory inside the Docker container
 WORKDIR /app
@@ -8,15 +8,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install Node.js dependencies
-RUN npm install
+RUN deno install
 
 # Copy all other files from the current directory to /app in the container
 COPY . .
 
-# Command to build the application
-RUN npm run build
-
 EXPOSE 5000
 
 # Command to run the application
-CMD ["npm", "run", "start"]
+CMD ["deno", "run", "--allow-all", "src/index.ts"]
