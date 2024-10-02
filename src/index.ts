@@ -27,7 +27,6 @@ import { MongoClient } from "mongodb";
 
 import { promises as fsPromises } from "node:fs";
 
-import * as mod from "node:process";
 import { config } from "dotenv";
 import { join } from "node:path";
 import { prettyExpGain } from "./utils/leveling.ts";
@@ -432,6 +431,11 @@ async function getVoiceChannelMembers(guild: Guild) {
 					!(member.voice.channelId === member.guild.afkChannelId)
 				) {
 					await prettyExpGain(client, member.user);
+				} else if (
+					!member.voice.deaf &&
+					!(member.voice.channelId === member.guild.afkChannelId)
+				) {
+					await prettyExpGain(client, member.user, 0.2);
 				}
 			}
 		}
@@ -453,11 +457,11 @@ function gracefulShutdown() {
 		.destroy()
 		.then(() => {
 			console.log("Discord client closed.");
-			mod.exit(0);
+			Deno.exit(0);
 		})
 		.catch((err) => {
 			console.error("Error closing Discord client:", err);
-			mod.exit(1);
+			Deno.exit(1);
 		});
 }
 

@@ -10,20 +10,20 @@ interface UserExperience {
 }
 
 // Function to calculate experience gain
-export function calculateExpGain(): number {
+export function calculateExpGain(multiplier: number = 1): number {
 	const randomChance = Math.random() * 100; // Get a random number from 0 to 99.99
 
 	// If the random chance is less than or equal to 2, calculate a random amount around 15
 	if (randomChance <= 2) {
 		// Add a small random variation between -5 and +5
-		const variation = Math.floor(Math.random() * 11) - 5; // Random number between -5 and 5
+		const variation = Math.floor(Math.random() * 11 * multiplier) - 5; // Random number between -5 and 5
 		const expGain = 15 + variation; // Calculate XP gain
 
 		// Ensure the value does not fall below 1
 		return Math.max(expGain, 1);
 	} else {
 		// Otherwise, generate a random number between 1 and 3
-		return Math.floor(Math.random() * 3) + 1; // Returns 1, 2, or 3
+		return Math.floor(Math.random() * 3 * multiplier) + 1; // Returns 1, 2, or 3
 	}
 }
 
@@ -146,10 +146,11 @@ export async function getUsersByExperienceRange(
 export async function prettyExpGain(
 	client: ClientExtended,
 	user: User,
+	multiplier: number = 1
 ): Promise<void> {
 	const userId = user.id; // Get user ID
 	const currentExperience = await getMemberExperience(client, userId); // Fetch current experience
-	const expGain = calculateExpGain(); // Calculate new experience gain
+	const expGain = calculateExpGain(multiplier); // Calculate new experience gain
 	const newExperience = currentExperience + expGain; // Update total experience
 
 	// Retrieve current level before updating
