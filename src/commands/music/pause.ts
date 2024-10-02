@@ -95,13 +95,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				if (player.paused) {
                     player.resume();
             
-                    await interaction.reply({
+                    await interaction.editReply({
                         content: "Resumed the current song.",
                     });
                 } else {
                     player.pause();
             
-                    await interaction.reply({
+                    await interaction.editReply({
                         content: "Paused the current song.",
                     });
                 }
