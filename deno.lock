@@ -359,6 +359,8 @@
         "npm:dotenv@^16.4.5",
         "npm:mongodb@^6.9.0",
         "npm:moonlink.js@^4.0.2",
+        "npm:sharp@~0.33.5",
+        "npm:texsvg@^2.2.2",
         "npm:ts-node@^10.9.2",
         "npm:typescript@^5.6.2"
       ]
