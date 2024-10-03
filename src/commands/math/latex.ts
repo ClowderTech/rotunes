@@ -11,6 +11,6 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
     const latexString = interaction.options.getString('latex', true);
     const svg = await texsvg(latexString);
-    const image = sharp(Buffer.from(svg)).resize({width: 1024, height: 1024, fit: "inside"}).png();
+    const image = sharp(Buffer.from(svg)).resize({width: 4096, height: 4096, fit: "inside"}).flatten({ background: { r: 255, g: 255, b: 255 } }).webp();
     await interaction.reply({ files: [image]});
 };
