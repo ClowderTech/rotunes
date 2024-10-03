@@ -31,6 +31,8 @@ import { config } from "dotenv";
 import { join } from "node:path";
 import { prettyExpGain } from "./utils/leveling.ts";
 
+import { Ollama } from "ollama"
+
 config({ override: true });
 
 const client: ClientExtended = new Client({
@@ -96,6 +98,9 @@ client.moonlink.on("trackEnd", async (player: Player) => {
 });
 
 client.commands = new Collection();
+client.ollama = new Ollama({
+	host: "https://ollama.clowdertech.com",
+});
 client.mongoclient = new MongoClient(Deno.env.get("MONGODB_URI")!);
 client.mongoclient.connect();
 
