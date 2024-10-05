@@ -87,10 +87,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                     { name: 'New Value', value: value }
                 );
 
-            await interaction.reply({ embeds: [embed], ephemeral: true});
+            await interaction.reply({ embeds: [embed]});
         } catch (error) {
             console.error(`Error updating server configuration: ${error}`);
-            await interaction.reply({ content: 'There was an error updating your configuration.', ephemeral: true });
+            await interaction.reply({ content: 'There was an error updating your configuration.'});
         }
     } else if (subcommand === 'get') { // Handling the 'get' subcommand
         const key = interaction.options.getString('key', true) as string; // Optional key
@@ -99,9 +99,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const value = getNestedKey(oldConfigData, key)
 
         if (value) {
-            await interaction.reply({ content: `Value for \`${key}\`: ${value}`, ephemeral: true });
+            await interaction.reply({ content: `Value for \`${key}\`: ${value}`});
         } else {
-            await interaction.reply({ content: `Key \`${key}\` not found.`, ephemeral: true });
+            await interaction.reply({ content: `Key \`${key}\` not found.`});
         }
     } else if (subcommand === 'setraw') { // Handling the 'setraw' subcommand
         const rawValue = interaction.options.getString('value', true);
@@ -110,7 +110,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         try {
             parsedData = JSON.parse(rawValue); // Parse the raw JSON string
         } catch {
-            await interaction.reply({ content: 'Invalid JSON format. Please provide a valid JSON string.', ephemeral: true });
+            await interaction.reply({ content: 'Invalid JSON format. Please provide a valid JSON string.'});
             return;
         }
 
@@ -126,12 +126,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 await setData(client, 'config', configData); // Insert new raw config
             }
 
-            await interaction.reply({ content: 'Raw configuration has been updated successfully.', ephemeral: true });
+            await interaction.reply({ content: 'Raw configuration has been updated successfully.'});
         } catch (error) {
             console.error(`Error updating raw server configuration: ${error}`);
-            await interaction.reply({ content: 'There was an error updating your raw configuration.', ephemeral: true });
+            await interaction.reply({ content: 'There was an error updating your raw configuration.'});
         }
     } else if (subcommand === 'getraw') { // Handling the 'getraw' subcommand
-        await interaction.reply({ content: `Raw configuration: \n\`\`\`json\n${JSON.stringify(oldConfigData, null, 2)}\n\`\`\``, ephemeral: true });
+        await interaction.reply({ content: `Raw configuration: \n\`\`\`json\n${JSON.stringify(oldConfigData, null, 2)}\n\`\`\``});
     }
 }
