@@ -2,6 +2,7 @@ import type { ObjectId } from "mongodb";
 import type { ClientExtended } from "./classes.ts";
 import { getData, setData, listData } from "./mongohelper.ts"; // Import mongoHelpers functions
 import { User, EmbedBuilder, MessageFlags } from "discord.js";
+import { getNestedKey, type Config } from "./config.ts";
 
 interface UserExperience {
 	userId: string;
@@ -188,16 +189,28 @@ export async function prettyExpGain(
 				}, // Added an emoji
 			)
 			.setTimestamp()
-			.setFooter({ text: "Keep pushing forward! 🚀" }); // Correctly formatted footer
+			.setFooter({ text: "If you don't want these messages, execute /userconf set key:leveling.levelupmessaging value:false" }); // Correctly formatted footer
 
 		// Send the embed message as a DM to the user
-		try {
-			await user.send({
-				embeds: [embed],
-				flags: [MessageFlags.SuppressNotifications],
-			});
-		} catch (error) {
-			console.error(`Could not send DM to ${user.username}:`, error);
+
+		const userData = await getData(client, 'config', { userId: userId });
+		const configData: Config = userData[0]?.config || {};
+		
+		let levelUpMessagingSetting = getNestedKey(configData, "leveling.levelupmessaging")
+
+		if (levelUpMessagingSetting === null) {
+			levelUpMessagingSetting = true;
+		}
+
+		if (levelUpMessagingSetting) {
+			try {
+				await user.send({
+					embeds: [embed],
+					flags: [MessageFlags.SuppressNotifications],
+				});
+			} catch (error) {
+				console.error(`Could not send DM to ${user.username}:`, error);
+			}
 		}
 
 		const guild = client.guilds.cache.get("601117178896580608")

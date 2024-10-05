@@ -1,6 +1,7 @@
-import { EmbedBuilder, CommandInteraction, SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
-import type { ClientExtended } from "../../utils/classes.js";
-import { getData, setData } from "../../utils/mongohelper.js"; // Adjust the import path as necessary
+import { EmbedBuilder, SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import type { ClientExtended } from "../../utils/classes.ts";
+import { getData, setData } from "../../utils/mongohelper.ts"; // Adjust the import path as necessary
+import { getNestedKey, setNestedKey, type Config } from "../../utils/config.ts";
 
 export const data = new SlashCommandBuilder()
     .setName('userconf')
@@ -43,7 +44,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const client = interaction.client as ClientExtended;
 
     const userData = await getData(client, 'config', { userId: userId });
-    const oldConfigData = userData[0]?.config || {};
+    const oldConfigData: Config = userData[0]?.config || {};
 
     // Determine which subcommand is called
     const subcommand = interaction.options.getSubcommand(); // Get subcommand directly
@@ -52,12 +53,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const key = interaction.options.get('key')?.value as string;
         const value = interaction.options.get('value')?.value as string;
 
+        let parsedValue: string | number | boolean;
+        try {
+            parsedValue = JSON.parse(value); // Attempt to parse it
+        } catch {
+            parsedValue = value; // If parsing fails, keep it as a string
+        }
+
         const configData = {
             userId: userId,
-            config: {
-                ...oldConfigData,
-                [key]: value
-            }
+            config: setNestedKey({ ...oldConfigData }, key, parsedValue)
         };
 
         try {
@@ -76,24 +81,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                     { name: 'New Value', value: value }
                 );
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.reply({ embeds: [embed], ephemeral: true });
         } catch (error) {
             console.error(`Error updating user configuration: ${error}`);
             await interaction.reply({ content: 'There was an error updating your configuration.', ephemeral: true });
         }
     } else if (subcommand === 'get') { // Handling the 'get' subcommand
-        const key = interaction.options.get('key')?.value as string | undefined; // Optional key
-        if (key) {
-            // If a key is specified, return its value
-            const value = oldConfigData[key];
-            if (value) {
-                await interaction.reply({ content: `Value for \`${key}\`: ${value}`, ephemeral: true });
-            } else {
-                await interaction.reply({ content: `Key \`${key}\` not found.`, ephemeral: true });
-            }
+        const key = interaction.options.getString('key', true) as string; // Optional key
+
+        const value = getNestedKey(oldConfigData, key)
+
+        if (value) {
+            await interaction.reply({ content: `Value for \`${key}\`: ${value}`, ephemeral: true });
         } else {
-            // If no key is provided, return the entire config
-            await interaction.reply({ content: `Current configuration: \n\`\`\`json\n${JSON.stringify(oldConfigData, null, 2)}\n\`\`\``, ephemeral: true });
+            await interaction.reply({ content: `Key \`${key}\` not found.`, ephemeral: true });
         }
     } else if (subcommand === 'setraw') { // Handling the 'setraw' subcommand
         const rawValue = interaction.options.get('value')?.value as string;
@@ -101,7 +102,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
         try {
             parsedData = JSON.parse(rawValue); // Parse the raw JSON string
-        } catch (error) {
+        } catch {
             await interaction.reply({ content: 'Invalid JSON format. Please provide a valid JSON string.', ephemeral: true });
             return;
         }
