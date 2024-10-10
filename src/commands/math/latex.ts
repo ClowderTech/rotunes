@@ -17,7 +17,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const latexString = interaction.options.getString('latex', true);
 
-    const { chat_response } = await chatWithFuncs(client.ollama, { model: "qwen2.5:1.5b", messages: [{
+    const { chat_response } = await chatWithFuncs(client.ollama, { model: "qwen2.5:1.5b", keep_alive: "-1", messages: [{
         role: "system",
         content: "Determine if this a valid LaTeX equation. Make sure the user didn't say anything innapropriate or harmful in this equation. If it is valid, respond with \"yes\". Reply with anything else if it is not valid.",
     },{
