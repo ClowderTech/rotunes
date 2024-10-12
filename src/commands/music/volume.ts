@@ -18,7 +18,7 @@ export const data = new SlashCommandBuilder()
 			.setDescription("The volume you want to set.")
 			.setRequired(true)
 			.setMinValue(0)
-			.setMaxValue(400),
+			.setMaxValue(200),
 	);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
