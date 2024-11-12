@@ -142,7 +142,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		await interaction.followUp({ embeds: [embed] });
 	}
 
-	if (!player.playing && !player.paused) {
+	if (!player.playing) {
 		player.play();
 	}
 }
