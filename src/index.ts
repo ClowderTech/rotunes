@@ -71,10 +71,10 @@ client.moonlink = new Manager({
 		},
 	],
 	options: {},
-	sendPayload: (guildId: string, sPayload: string) => {
+	sendPayload: (guildId: string, payload: unknown) => {
 		const guild = client.guilds.cache.get(guildId);
-        if (guild) guild.shard.send(payload); // Sending data to the shard if the guild is available
-    }
+		if (guild) guild.shard.send(payload); // Sending data to the shard if the guild is available
+	},
 });
 
 // Event: Node created
