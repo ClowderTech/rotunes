@@ -71,7 +71,7 @@ client.moonlink = new Manager({
 		},
 	],
 	options: {},
-	sendPayload: (guildID: string, sPayload: string) => {
+	sendPayload: (guildId: string, sPayload: string) => {
 		const guild = client.guilds.cache.get(guildId);
         if (guild) guild.shard.send(payload); // Sending data to the shard if the guild is available
     }
