@@ -48,14 +48,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 	let player = client.moonlink.players.get(guildID);
 	if (!player) {
-		player = client.moonlink.players.create({
-			guildId: guildID,
-			voiceChannelId: member.voice.channel.id,
-			textChannelId: interaction.channel.id,
-			volume: 100,
-			autoPlay: false,
-			autoLeave: true,
-		});
+		try {
+			player = client.moonlink.players.create({
+				guildId: guildID,
+				voiceChannel: member.voice.channel.id,
+				textChannel: interaction.channel.id,
+				volume: 100,
+				autoPlay: false,
+				autoLeave: true,
+			});
+		} catch (error) {
+			if (error instanceof TypeError) {
+				client.moonlink.nodes.check();
+				throw new Error(
+					"Please try this command again. We had to refresh the music player.",
+				);
+			} else {
+				throw error;
+			}
+		}
 	}
 
 	// player.setAutoLeave(true);
@@ -68,14 +79,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		});
 	}
 
-	const song = <string>interaction.options.get("song", true).value;
+	const song = interaction.options.getString("song", true);
 
 	await interaction.deferReply();
 
 	const playable = await client.moonlink.search({
 		query: song,
 		requester: interaction.user.id,
-		source: "youtubemusic",
+		source: "soundcloud",
 	});
 
 	if (playable.loadType === "empty") {
@@ -115,7 +126,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					? `Queued playlist: \`${playlistInfo.name}\``
 					: `Currently playing: \`${
 							playable.tracks[0]?.title || "Unknown Track"
-					  }\``,
+						}\``,
 			)
 			.setColor("#2b2d31")
 			.setThumbnail(

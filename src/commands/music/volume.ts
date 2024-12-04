@@ -8,6 +8,8 @@ import {
 	ChatInputCommandInteraction,
 } from "discord.js";
 import { type ClientExtended, UserMadeError } from "../../utils/classes.ts";
+import { getNestedKey, type Config } from "../../utils/config.ts";
+import { getData } from "../../utils/mongohelper.ts";
 
 export const data = new SlashCommandBuilder()
 	.setName("volume")
@@ -17,8 +19,7 @@ export const data = new SlashCommandBuilder()
 			.setName("volume")
 			.setDescription("The volume you want to set.")
 			.setRequired(true)
-			.setMinValue(0)
-			.setMaxValue(200),
+			.setMinValue(0),
 	);
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -62,24 +63,45 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 	const channel = member.voice.channel;
 
-	const volume = <number>interaction.options.get("volume", true).value;
+	const volume = interaction.options.getInteger("volume", true);
+
+	if (!interaction.guild) {
+		throw new UserMadeError("You must use this in a server.");
+	}
+
+	const serverId = interaction.guild.id; // Get the ID of the server executing the command
+
+	const serverData = await getData(client, "config", { serverId: serverId });
+	const configData: Config = serverData[0]?.config || {};
+
+	const maxVolume =
+		(getNestedKey(configData, "music.maxvolume") as number) || 100;
+
+	if (volume < 0 || volume > maxVolume) {
+		throw new UserMadeError(
+			`The volume must be between 0 and ${maxVolume}. This can be set using \`/serverconf set key:music.maxvolume value:ENTER_YOUR_NUMBER_HERE\``,
+		);
+	}
 
 	if (
 		!(
 			member.roles.cache.some((role) => role.name === "DJ") ||
 			member.permissions.has("ModerateMembers", true) ||
-			channel.members.filter((member) => member.id !== client.user!.id && !member.user.bot)
-				.size <= 2
+			channel.members.filter(
+				(member) => member.id !== client.user!.id && !member.user.bot,
+			).size <= 2
 		)
 	) {
-		const votesNeeded = Math.ceil(channel.members.filter((member) => member.id !== client.user!.id && !member.user.bot).size / 2);
+		const votesNeeded = Math.ceil(
+			channel.members.filter(
+				(member) => member.id !== client.user!.id && !member.user.bot,
+			).size / 2,
+		);
 
 		const embed = new EmbedBuilder()
 			.setTitle("Vote to stop")
 			.setDescription(
-				`You are not a DJ, so you need to vote. React with ✅ to vote to change the volume of the player. Have ${
-					votesNeeded
-				} votes in 30 seconds. The vote will end <t:${
+				`You are not a DJ, so you need to vote. React with ✅ to vote to change the volume of the player. Have ${votesNeeded} votes in 30 seconds. The vote will end <t:${
 					Math.floor(Date.now() / 1000) + 30
 				}:R>`,
 			)
@@ -93,7 +115,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		await message.react("✅");
 
 		const filter = (reaction: MessageReaction, user: User) =>
-			reaction.emoji.name === "✅" && user.id !== client.user!.id && !user.bot;
+			reaction.emoji.name === "✅" &&
+			user.id !== client.user!.id &&
+			!user.bot;
 
 		const collector = message.createReactionCollector({
 			filter,

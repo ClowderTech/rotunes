@@ -8,7 +8,6 @@ import {
 	ChatInputCommandInteraction,
 } from "discord.js";
 import { type ClientExtended, UserMadeError } from "../../utils/classes.ts";
-import type { TPlayerLoop } from "moonlink.js";
 
 export const data = new SlashCommandBuilder()
 	.setName("loop")
@@ -70,24 +69,30 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 	const loop_type = interaction.options.get("type", true).value! as string;
 
+	const loop_type_number =
+		loop_type == "track" ? 1 : loop_type == "queue" ? 2 : "none";
+
 	const channel = member.voice.channel;
 
 	if (
 		!(
 			member.roles.cache.some((role) => role.name === "DJ") ||
 			member.permissions.has("ModerateMembers", true) ||
-			channel.members.filter((member) => member.id !== client.user!.id && !member.user.bot)
-				.size <= 2
+			channel.members.filter(
+				(member) => member.id !== client.user!.id && !member.user.bot,
+			).size <= 2
 		)
 	) {
-		const votesNeeded = Math.ceil(channel.members.filter((member) => member.id !== client.user!.id && !member.user.bot).size / 2);
+		const votesNeeded = Math.ceil(
+			channel.members.filter(
+				(member) => member.id !== client.user!.id && !member.user.bot,
+			).size / 2,
+		);
 
 		const embed = new EmbedBuilder()
 			.setTitle("Vote to stop")
 			.setDescription(
-				`You are not a DJ, so you need to vote. React with ✅ to vote to loop the player. Have ${
-					votesNeeded
-				} votes in 30 seconds. The vote will end <t:${
+				`You are not a DJ, so you need to vote. React with ✅ to vote to loop the player. Have ${votesNeeded} votes in 30 seconds. The vote will end <t:${
 					Math.floor(Date.now() / 1000) + 30
 				}:R>`,
 			)
@@ -101,7 +106,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		await message.react("✅");
 
 		const filter = (reaction: MessageReaction, user: User) =>
-			reaction.emoji.name === "✅" && user.id !== client.user?.id && !user.bot;
+			reaction.emoji.name === "✅" &&
+			user.id !== client.user?.id &&
+			!user.bot;
 
 		const collector = message.createReactionCollector({
 			filter,
@@ -116,7 +123,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 		collector.on("end", async () => {
 			if (votes >= votesNeeded) {
-				player!.setLoop(loop_type as TPlayerLoop);
+				player!.setLoop(loop_type);
 				if (loop_type == "none") {
 					await interaction.editReply({
 						content: "Disabled looping.",
@@ -147,7 +154,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		return;
 	}
 
-	player!.setLoop(loop_type as TPlayerLoop);
+	player!.setLoop(loop_type_number);
 
 	if (loop_type == "none") {
 		await interaction.reply({ content: "Disabled looping.", embeds: [] });

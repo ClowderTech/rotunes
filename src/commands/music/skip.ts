@@ -8,9 +8,9 @@ import {
 	ChatInputCommandInteraction,
 } from "discord.js";
 import { type ClientExtended, UserMadeError } from "../../utils/classes.ts";
-import type { Queue } from "moonlink.js";
+import type { MoonlinkQueue } from "moonlink.js";
 
-const removeFromQueue = (queue: Queue, amount: number) => {
+const removeFromQueue = (queue: MoonlinkQueue, amount: number) => {
 	// Check if amount is 2 or greater
 	if (amount >= 2) {
 		// Calculate how many times to remove from the front
@@ -80,18 +80,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		);
 	}
 
-
-    const channel = member.voice.channel;
+	const channel = member.voice.channel;
 
 	if (
 		!(
 			member.roles.cache.some((role) => role.name === "DJ") ||
 			member.permissions.has("ModerateMembers", true) ||
-			channel.members.filter((member) => member.id !== client.user!.id && !member.user.bot)
-				.size <= 2
+			channel.members.filter(
+				(member) => member.id !== client.user!.id && !member.user.bot,
+			).size <= 2
 		)
 	) {
-		const votesNeeded = Math.ceil(channel.members.filter((member) => member.id !== client.user!.id && !member.user.bot).size / 2);
+		const votesNeeded = Math.ceil(
+			channel.members.filter(
+				(member) => member.id !== client.user!.id && !member.user.bot,
+			).size / 2,
+		);
 
 		const embed = new EmbedBuilder()
 			.setTitle("Vote to stop")
@@ -112,7 +116,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		await message.react("✅");
 
 		const filter = (reaction: MessageReaction, user: User) =>
-			reaction.emoji.name === "✅" && user.id !== client.user!.id && !user.bot;
+			reaction.emoji.name === "✅" &&
+			user.id !== client.user!.id &&
+			!user.bot;
 
 		const collector = message.createReactionCollector({
 			filter,

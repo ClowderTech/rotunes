@@ -1,6 +1,6 @@
 import { Client, Collection, SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import type { MongoClient } from "mongodb";
-import type { Manager } from "moonlink.js";
+import type { MoonlinkManager } from "moonlink.js";
 import type { Ollama } from "ollama";
 
 export interface Command {
@@ -12,7 +12,7 @@ export interface ClientExtended extends Client {
     commands: Collection<string, Command>;
     mongoclient: MongoClient;
     ollama: Ollama;
-    moonlink: Manager;
+    moonlink: MoonlinkManager;
 }
 
 export class UserMadeError extends Error {
