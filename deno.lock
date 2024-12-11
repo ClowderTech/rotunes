@@ -4,12 +4,12 @@
     "npm:@discordjs/builders@^1.9.0": "1.9.0",
     "npm:@discordjs/voice@0.17": "0.17.0",
     "npm:@types/jsdom@^21.1.7": "21.1.7",
-    "npm:@types/node@^22.10.1": "22.10.1",
+    "npm:@types/node@^22.10.2": "22.10.2",
     "npm:discord.js@^14.16.3": "14.16.3",
     "npm:dotenv@^16.4.7": "16.4.7",
-    "npm:mongodb@^6.11.0": "6.11.0",
-    "npm:moonlink.js@^3.6.64": "3.6.64",
-    "npm:ollama@~0.5.10": "0.5.10",
+    "npm:mongodb@^6.12.0": "6.12.0",
+    "npm:moonlink.js@^4.2.1": "4.2.2",
+    "npm:ollama@~0.5.11": "0.5.11",
     "npm:sharp@~0.33.5": "0.33.5",
     "npm:texsvg@^2.2.2": "2.2.2",
     "npm:ts-node@^10.9.2": "10.9.2_@types+node@22.5.4_typescript@5.7.2",
@@ -232,8 +232,8 @@
         "parse5"
       ]
     },
-    "@types/node@22.10.1": {
-      "integrity": "sha512-qKgsUwfHZV2WCWLAnVP1JqnpE6Im6h3Y0+fYgMTasNQ7V++CBX5OT1as0g0f+OyubbFqhf6XVNIsmN4IIhEgGQ==",
+    "@types/node@22.10.2": {
+      "integrity": "sha512-Xxr6BBRCAOQixvonOye19wnzyDiUtTeqldOOmj3CkeblonbccA12PFwlufvRdrpjXxqnmUaeiU5EOA+7s5diUQ==",
       "dependencies": [
         "undici-types@6.20.0"
       ]
@@ -445,16 +445,16 @@
         "whatwg-url"
       ]
     },
-    "mongodb@6.11.0": {
-      "integrity": "sha512-yVbPw0qT268YKhG241vAMLaDQAPbRyTgo++odSgGc9kXnzOujQI60Iyj23B9sQQFPSvmNPvMZ3dsFz0aN55KgA==",
+    "mongodb@6.12.0": {
+      "integrity": "sha512-RM7AHlvYfS7jv7+BXund/kR64DryVI+cHbVAy9P61fnb1RcWZqOW1/Wj2YhqMCx+MuYhqTRGv7AwHBzmsCKBfA==",
       "dependencies": [
         "@mongodb-js/saslprep",
         "bson",
         "mongodb-connection-string-url"
       ]
     },
-    "moonlink.js@3.6.64": {
-      "integrity": "sha512-5KpLtJnomCzpOjwKVOxjKBsZBt4RxBecTR1rqRrNSEUG4spjthNhaN3zDFyM18EzCLO4bMw1A+08Exrxhpt+1g==",
+    "moonlink.js@4.2.2": {
+      "integrity": "sha512-odVtTS5tdKS2koqhdMOXCSv9jZeGe+Vk/gp/E2qOraYFqu3znDhED9BdVx/xJaoD2xPtKzMItxQWkJSjqrMXAg==",
       "dependencies": [
         "ws"
       ]
@@ -465,8 +465,8 @@
         "boolbase"
       ]
     },
-    "ollama@0.5.10": {
-      "integrity": "sha512-M5O4u6S6yZeeKFrKA7ZfGGLjK54otOVGPrOUc3N64zSTpz9J+x/nh93dmD6Py7YLgXzq9I6Nq+PDDoaqJuV3LQ==",
+    "ollama@0.5.11": {
+      "integrity": "sha512-lDAKcpmBU3VAOGF05NcQipHNKTdpKfAHpZ7bjCsElkUkmX7SNZImi6lwIxz/l1zQtLq0S3wuLneRuiXxX2KIew==",
       "dependencies": [
         "whatwg-fetch"
       ]
@@ -623,12 +623,12 @@
         "npm:@discordjs/builders@^1.9.0",
         "npm:@discordjs/voice@0.17",
         "npm:@types/jsdom@^21.1.7",
-        "npm:@types/node@^22.10.1",
+        "npm:@types/node@^22.10.2",
         "npm:discord.js@^14.16.3",
         "npm:dotenv@^16.4.7",
-        "npm:mongodb@^6.11.0",
-        "npm:moonlink.js@^3.6.64",
-        "npm:ollama@~0.5.10",
+        "npm:mongodb@^6.12.0",
+        "npm:moonlink.js@^4.2.1",
+        "npm:ollama@~0.5.11",
         "npm:sharp@~0.33.5",
         "npm:texsvg@^2.2.2",
         "npm:ts-node@^10.9.2",
