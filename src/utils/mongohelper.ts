@@ -1,5 +1,5 @@
 // mongoHelpers.ts
-import { Collection, ObjectId, type WithId, type Document } from "mongodb";
+import { Collection, type Document, ObjectId, type WithId } from "mongodb";
 import type { ClientExtended } from "./classes.ts";
 
 function generateDatabaseName(botName: string): string {

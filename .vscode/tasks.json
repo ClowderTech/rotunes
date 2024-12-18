@@ -13,6 +13,6 @@
 				"isDefault": true
 			},
 			"label": "tsc: watch - tsconfig.json"
-		},
+		}
 	]
 }
