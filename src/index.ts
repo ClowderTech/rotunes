@@ -1,18 +1,18 @@
 import {
-	Events,
+	type APIApplicationCommand,
+	ChannelType,
 	Client,
-	GatewayIntentBits,
 	Collection,
+	EmbedBuilder,
+	Events,
+	GatewayIntentBits,
+	Guild,
+	type Interaction,
 	REST,
 	Routes,
-	type Interaction,
-	EmbedBuilder,
 	SlashCommandBuilder,
-	type APIApplicationCommand,
-	Guild,
-	ChannelType,
-	VoiceChannel,
 	StageChannel,
+	VoiceChannel,
 } from "discord.js";
 
 import { Manager } from "moonlink.js";
@@ -30,7 +30,7 @@ import { config } from "dotenv";
 import { join } from "node:path";
 import { prettyExpGain } from "./utils/leveling.ts";
 
-import { Ollama } from "ollama"
+import { Ollama } from "ollama";
 
 config({ override: true });
 
@@ -59,25 +59,25 @@ const client: ClientExtended = new Client({
 }) as ClientExtended;
 
 client.moonlink = new Manager({
-    nodes: [
-        {
-            host: Deno.env.get("LAVALINK_HOST")!, // lavalink.clowdertech.com
-            port: Number(Deno.env.get("LAVALINK_PORT")), // 443
-            secure: Boolean(Deno.env.get("LAVALINK_SECURE")!), // true
-            password: Deno.env.get("LAVALINK_PASSWORD")!, // ImGay69
-            retryDelay: 5000,
-            retryAmount: 65535,
-            identifier: "main",
-        },
-    ],
-    options: {
-        NodeLinkFeatures: true,
-        previousInArray: true,
-    },
-    sendPayload: (guildId: string, payload: string) => {
-        const guild = client.guilds.cache.get(guildId);
-        if (guild) guild.shard.send(JSON.parse(payload)); // Sending data to the shard if the guild is available
-    },
+	nodes: [
+		{
+			host: Deno.env.get("LAVALINK_HOST")!, // lavalink.clowdertech.com
+			port: Number(Deno.env.get("LAVALINK_PORT")), // 443
+			secure: Boolean(Deno.env.get("LAVALINK_SECURE")!), // true
+			password: Deno.env.get("LAVALINK_PASSWORD")!, // ImGay69
+			retryDelay: 5000,
+			retryAmount: 65535,
+			identifier: "main",
+		},
+	],
+	options: {
+		NodeLinkFeatures: true,
+		previousInArray: true,
+	},
+	sendPayload: (guildId: string, payload: string) => {
+		const guild = client.guilds.cache.get(guildId);
+		if (guild) guild.shard.send(JSON.parse(payload)); // Sending data to the shard if the guild is available
+	},
 });
 
 // Event: Node created
@@ -91,7 +91,7 @@ client.moonlink.on("nodeError", (node, error) => {
 
 client.moonlink.on("trackEnd", async (player) => {
 	const channel = await client.channels.cache.get(player.voiceChannelId) ||
-	(await client.channels.fetch(player.voiceChannelId));
+		(await client.channels.fetch(player.voiceChannelId));
 	if (
 		channel &&
 		channel.isVoiceBased() &&
@@ -317,14 +317,12 @@ function areCommandsRegistered(
 			}
 
 			// Check each property of the option, with default for required
-			const actualRequired = 
-				actualOption.required !== undefined
-					? actualOption.required
-					: false; // Get actual required value (true or false)
-			const registeredRequired =
-				registeredOption.required !== undefined
-					? registeredOption.required
-					: false; // Assume false if undefined
+			const actualRequired = actualOption.required !== undefined
+				? actualOption.required
+				: false; // Get actual required value (true or false)
+			const registeredRequired = registeredOption.required !== undefined
+				? registeredOption.required
+				: false; // Assume false if undefined
 
 			if (
 				actualOption.name !== registeredOption.name ||
@@ -393,7 +391,7 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
 
 			await rest.put(Routes.applicationCommands(client.user!.id), {
 				body: Object.values(commands).map((command) =>
-					command.data.toJSON(),
+					command.data.toJSON()
 				),
 			});
 
@@ -404,7 +402,7 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
 				),
 				{
 					body: Object.values(devCommands).map((command) =>
-						command.data.toJSON(),
+						command.data.toJSON()
 					),
 				},
 			);

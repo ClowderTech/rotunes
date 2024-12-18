@@ -30,13 +30,13 @@ export async function chatWithFuncs(
 			const func = functions[element.function.name];
 			if (func) {
 				// Optimized: Directly await the function call
-				toolCallResponse += `Function "${
-					element.function.name
-				}" executed and returned: "${await func(
-					...Object.values(element.function.arguments),
-				)}"\n`;
+				toolCallResponse +=
+					`Function "${element.function.name}" executed and returned: "${await func(
+						...Object.values(element.function.arguments),
+					)}"\n`;
 			} else {
-				toolCallResponse += `Function "${element.function.name}" not found.\n`;
+				toolCallResponse +=
+					`Function "${element.function.name}" not found.\n`;
 			}
 		}
 

@@ -1,8 +1,8 @@
 import type { ObjectId } from "mongodb";
 import type { ClientExtended } from "./classes.ts";
-import { getData, setData, listData } from "./mongohelper.ts"; // Import mongoHelpers functions
-import { User, EmbedBuilder, MessageFlags } from "discord.js";
-import { getNestedKey, type Config } from "./config.ts";
+import { getData, listData, setData } from "./mongohelper.ts"; // Import mongoHelpers functions
+import { EmbedBuilder, MessageFlags, User } from "discord.js";
+import { type Config, getNestedKey } from "./config.ts";
 
 interface UserExperience {
 	userId: string;
@@ -147,7 +147,7 @@ export async function getUsersByExperienceRange(
 export async function prettyExpGain(
 	client: ClientExtended,
 	user: User,
-	multiplier: number = 1
+	multiplier: number = 1,
 ): Promise<void> {
 	const userId = user.id; // Get user ID
 	const currentExperience = await getMemberExperience(client, userId); // Fetch current experience
@@ -189,14 +189,20 @@ export async function prettyExpGain(
 				}, // Added an emoji
 			)
 			.setTimestamp()
-			.setFooter({ text: "If you don't want these messages, execute /userconf set key:leveling.levelupmessaging value:false" }); // Correctly formatted footer
+			.setFooter({
+				text:
+					"If you don't want these messages, execute /userconf set key:leveling.levelupmessaging value:false",
+			}); // Correctly formatted footer
 
 		// Send the embed message as a DM to the user
 
-		const userData = await getData(client, 'config', { userId: userId });
+		const userData = await getData(client, "config", { userId: userId });
 		const configData: Config = userData[0]?.config || {};
-		
-		let levelUpMessagingSetting = getNestedKey(configData, "leveling.levelupmessaging")
+
+		let levelUpMessagingSetting = getNestedKey(
+			configData,
+			"leveling.levelupmessaging",
+		);
 
 		if (levelUpMessagingSetting === null) {
 			levelUpMessagingSetting = true;
@@ -213,12 +219,20 @@ export async function prettyExpGain(
 			}
 		}
 
-		const guild = client.guilds.cache.get("601117178896580608")
+		const guild = client.guilds.cache.get("601117178896580608");
 
-		const level10Role = guild?.roles.cache.find(role => role.id === "1203119410982690906");
-		const level20Role = guild?.roles.cache.find(role => role.id === "1203119407749013574");
-		const level40Role = guild?.roles.cache.find(role => role.id === "1203119402527105074");
-		const level60Role = guild?.roles.cache.find(role => role.id === "1203119393370939412");
+		const level10Role = guild?.roles.cache.find((role) =>
+			role.id === "1203119410982690906"
+		);
+		const level20Role = guild?.roles.cache.find((role) =>
+			role.id === "1203119407749013574"
+		);
+		const level40Role = guild?.roles.cache.find((role) =>
+			role.id === "1203119402527105074"
+		);
+		const level60Role = guild?.roles.cache.find((role) =>
+			role.id === "1203119393370939412"
+		);
 
 		const member = guild?.members.cache.get(user.id);
 

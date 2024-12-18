@@ -1,32 +1,37 @@
-import { Client, Collection, SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import {
+	ChatInputCommandInteraction,
+	Client,
+	Collection,
+	SlashCommandBuilder,
+} from "discord.js";
 import type { MongoClient } from "mongodb";
 import type { Manager } from "moonlink.js";
 import type { Ollama } from "ollama";
 
 export interface Command {
-    data: SlashCommandBuilder;
-    execute: (interaction: ChatInputCommandInteraction) => void
+	data: SlashCommandBuilder;
+	execute: (interaction: ChatInputCommandInteraction) => void;
 }
 
 export interface ClientExtended extends Client {
-    commands: Collection<string, Command>;
-    mongoclient: MongoClient;
-    ollama: Ollama;
-    moonlink: Manager;
+	commands: Collection<string, Command>;
+	mongoclient: MongoClient;
+	ollama: Ollama;
+	moonlink: Manager;
 }
 
 export class UserMadeError extends Error {
-    constructor(message: string) {
-        super(message);
+	constructor(message: string) {
+		super(message);
 
-        this.name = this.constructor.name;
+		this.name = this.constructor.name;
 
-        Error.captureStackTrace(this, this.constructor);
+		Error.captureStackTrace(this, this.constructor);
 
-        Object.setPrototypeOf(this, UserMadeError.prototype);
+		Object.setPrototypeOf(this, UserMadeError.prototype);
 
-        this.message = message;
+		this.message = message;
 
-        this.name = "UserMadeError";
-    }
+		this.name = "UserMadeError";
+	}
 }

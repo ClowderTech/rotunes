@@ -1,4 +1,4 @@
 {
-    "DockerRun.DisableDockerrc": true,
-    "deno.enable": true
+	"DockerRun.DisableDockerrc": true,
+	"deno.enable": true
 }
