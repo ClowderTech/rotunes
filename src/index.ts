@@ -26,13 +26,10 @@ import { MongoClient } from "mongodb";
 
 import { promises as fsPromises } from "node:fs";
 
-import { config } from "dotenv";
 import { join } from "node:path";
 import { prettyExpGain } from "./utils/leveling.ts";
 
 import { Ollama } from "ollama";
-
-config({ override: true });
 
 const client: ClientExtended = new Client({
 	intents: [

@@ -5,7 +5,7 @@ FROM denoland/deno:debian
 WORKDIR /app
 
 # Copy package.json and package-lock.json (if it exists) to Docker image
-COPY package*.json ./
+COPY deno.json ./
 
 # Install Node.js dependencies
 RUN deno install
