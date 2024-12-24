@@ -7,6 +7,8 @@ import {
 import { LuauExecutionApi } from "openblox/cloud";
 import { pollMethod } from "openblox/helpers";
 import { setConfig } from "openblox/config";
+import { ClientExtended } from "../../utils/classes.ts";
+import { scanMessage } from "../../utils/textgen.ts";
 
 export const data = new SlashCommandBuilder()
 	.setName("executeluau")
@@ -20,8 +22,21 @@ export const data = new SlashCommandBuilder()
 			.setRequired(true)
 	);
 
+let client: ClientExtended;
+
+async function format(output: string): Promise<string> {
+	return await scanMessage(
+			client,
+			output.normalize().replaceAll("`", "").trim(),
+		)
+		? "Ommited due to possible bypass"
+		: output.normalize().replaceAll("`", "").trim();
+}
+
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply();
+
+	client = interaction.client as ClientExtended;
 
 	const luauCode = interaction.options.getString("luau", true);
 	const apiKey = Deno.env.get("ROBLOX_API_KEY");
@@ -62,12 +77,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.editReply({
 		content: afterData.error
 			? `Execution Errored!\n\nResults:\`\`\`${afterData.error.code}: ${afterData.error.message}\`\`\`Logs:\`\`\`${
-				logs[0].messages.join("\n") || "No Output"
+				await format(logs[0].messages.join("\n")) || "No Output"
 			}\`\`\``
 			: `Execution Successful!\n\nResults:\`\`\`${
-				afterData.output.results.join("\n") || "No Output"
+				await format(afterData.output.results.join("\n")) || "No Output"
 			}\`\`\`Logs:\`\`\`${
-				logs[0].messages.join("\n") || "No Output"
+				await format(logs[0].messages.join("\n")) || "No Output"
 			}\`\`\``,
 		allowedMentions: { parse: [] },
 	});
