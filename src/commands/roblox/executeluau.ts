@@ -25,13 +25,18 @@ export const data = new SlashCommandBuilder()
 let client: ClientExtended;
 
 async function format(output: string): Promise<string> {
-	return await scanMessage(client, output.normalize().replaceAll("`", "").trim()) ? "Ommited due to possible bypass" : output.normalize().replaceAll("`", "").trim()
+	return await scanMessage(
+			client,
+			output.normalize().replaceAll("`", "").trim(),
+		)
+		? "Ommited due to possible bypass"
+		: output.normalize().replaceAll("`", "").trim();
 }
 
 export async function execute(interaction: ChatInputCommandInteraction) {
 	await interaction.deferReply();
 
-	client = interaction.client as ClientExtended
+	client = interaction.client as ClientExtended;
 
 	const luauCode = interaction.options.getString("luau", true);
 	const apiKey = Deno.env.get("ROBLOX_API_KEY");

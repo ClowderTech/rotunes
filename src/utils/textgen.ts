@@ -1,5 +1,4 @@
 import type { ChatRequest, ChatResponse, Message, Ollama } from "ollama";
-import { type Message as DiscordMessage } from "discord.js";
 import { ClientExtended } from "./classes.ts";
 
 export type SyncOrAsyncFunction = (
@@ -55,7 +54,10 @@ export async function chatWithFuncs(
 	return { full_response, chat_response };
 }
 
-export async function scanMessage(client: ClientExtended, input: string): Promise<boolean> {
+export async function scanMessage(
+	client: ClientExtended,
+	input: string,
+): Promise<boolean> {
 	input = input.normalize().trim();
 
 	const { chat_response } = await chatWithFuncs(client.ollama, {
