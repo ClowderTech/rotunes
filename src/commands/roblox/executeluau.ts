@@ -57,9 +57,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		version: data.version,
 		sessionId: data.sessionId,
 		taskId: data.taskId,
-	})
+	});
 
 	await interaction.editReply(
-		afterData.error ? `Execution Errored!\n\nResults:\`\`\`${afterData.error.code}: ${afterData.error.message}\`\`\`Logs:\`\`\`${logs[0].messages.join("\n") || "No Output"}\`\`\`` : `Execution Successful!\n\nResults:\`\`\`${afterData.output.results.join("\n") || "No Output"}\`\`\`Logs:\`\`\`${logs[0].messages.join("\n") || "No Output"}\`\`\``
+		afterData.error
+			? `Execution Errored!\n\nResults:\`\`\`${afterData.error.code}: ${afterData.error.message}\`\`\`Logs:\`\`\`${
+				logs[0].messages.join("\n") || "No Output"
+			}\`\`\``
+			: `Execution Successful!\n\nResults:\`\`\`${
+				afterData.output.results.join("\n") || "No Output"
+			}\`\`\`Logs:\`\`\`${
+				logs[0].messages.join("\n") || "No Output"
+			}\`\`\``,
 	);
 }
