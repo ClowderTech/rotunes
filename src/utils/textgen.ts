@@ -1,4 +1,6 @@
 import type { ChatRequest, ChatResponse, Message, Ollama } from "ollama";
+import { type Message as DiscordMessage } from "discord.js";
+import { ClientExtended } from "./classes.ts";
 
 export type SyncOrAsyncFunction = (
 	...args: string[]
@@ -51,4 +53,32 @@ export async function chatWithFuncs(
 	}
 
 	return { full_response, chat_response };
+}
+
+export async function scanMessage(client: ClientExtended, input: string): Promise<boolean> {
+	input = input.normalize().trim();
+
+	const { chat_response } = await chatWithFuncs(client.ollama, {
+		model: "llama-guard3:8b",
+		messages: [
+			{
+				role: "user",
+				content: input,
+			},
+		],
+	});
+
+	const response = chat_response.message.content.normalize().trim();
+
+	if (response.includes("unsafe")) {
+		const reason = response.replace("unsafe", "").trim();
+
+		if (reason === "S14") {
+			return false;
+		}
+
+		return true;
+	}
+
+	return false;
 }
