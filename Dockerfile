@@ -8,7 +8,7 @@ WORKDIR /app
 COPY deno.json ./
 
 # Install Node.js dependencies
-RUN deno install
+RUN deno install --allow-scripts=npm:sharp
 
 # Copy all other files from the current directory to /app in the container
 COPY . .
