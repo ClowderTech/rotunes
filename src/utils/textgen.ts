@@ -54,6 +54,17 @@ export async function chatWithFuncs(
 	return { full_response, chat_response };
 }
 
+export async function convertBlobToUint8Array(blob: Blob): Promise<Uint8Array> {
+	try {
+		const arrayBuffer = await new Response(blob).arrayBuffer();
+		const uint8Array = new Uint8Array(arrayBuffer);
+		return uint8Array;
+	} catch (error) {
+		console.error("Error converting to Uint8Array:", error);
+		throw error;
+	}
+}
+
 export async function scanMessage(
 	client: ClientExtended,
 	input: string,

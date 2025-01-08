@@ -45,7 +45,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				player.queue.size + (player.playing ? 1 : 0)
 			} song(s))`,
 		)
-		.setColor("#2b2d31")
+		.setColor(0x1E90FF)
 		.setTimestamp()
 		.setThumbnail(
 			player.current.artworkUrl ||
@@ -54,7 +54,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		.setDescription(
 			`**Now Playing:**\n[${player.current.title || "Unknown Track"}](${
 				player.current.url || "https://www.google.com/"
-			}) (requested by ${player.current.requestedBy}) (duration: ${
+			}) (requested by <@!${player.current.requestedBy}>) (duration: ${
 				Math.floor(
 					calculatedPosition / 1000,
 				)
@@ -68,7 +68,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				(song: Track, index: number) =>
 					`${index + 1}. [${song.title || "Unknown Track"}](${
 						song.url || "https://www.google.com/"
-					}) (requested by ${song.requestedBy})`,
+					}) (requested by <@!${song.requestedBy}>)`,
 			)
 			.join("\n");
 		embed.addFields({

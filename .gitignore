@@ -179,3 +179,5 @@ package-lock.json
 bun.lockb
 
 .data
+
+deno.lock
