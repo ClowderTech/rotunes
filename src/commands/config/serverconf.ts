@@ -5,8 +5,13 @@ import {
 	SlashCommandBuilder,
 } from "discord.js";
 import type { ClientExtended } from "../../utils/classes.ts";
+import { ObjectId } from "mongodb";
 import { getData, setData } from "../../utils/mongohelper.ts"; // Adjust the import path as necessary
-import { type Config, getNestedKey, setNestedKey } from "../../utils/config.ts";
+import {
+	getNestedKey,
+	ServerConfig,
+	setNestedKey,
+} from "../../utils/config.ts";
 
 export const data = new SlashCommandBuilder()
 	.setName("serverconf")
@@ -17,12 +22,40 @@ export const data = new SlashCommandBuilder()
 			.setName("set")
 			.setDescription("Set a server configuration option.")
 			.addStringOption((option) =>
-				option.setName("key")
+				option
+					.setName("key")
 					.setDescription("The configuration key you want to set")
 					.setRequired(true)
+					.addChoices([
+						{
+							name: "moderation.automod.enabled",
+							value: "moderation.automod.enabled",
+						},
+						{
+							name: "music.maxvolume",
+							value: "music.maxvolume",
+						},
+						{
+							name: "moderation.automod.lookback",
+							value: "moderation.automod.lookback",
+						},
+						{
+							name: "moderation.automod.logchannel",
+							value: "moderation.automod.logchannel",
+						},
+						{
+							name: "moderation.automod.bypassrole",
+							value: "moderation.automod.bypassrole",
+						},
+						{
+							name: "moderation.automod.disabledcategories",
+							value: "moderation.automod.disabledcategories",
+						},
+					])
 			)
 			.addStringOption((option) =>
-				option.setName("value")
+				option
+					.setName("value")
 					.setDescription("The configuration value to set")
 					.setRequired(true)
 			)
@@ -32,9 +65,36 @@ export const data = new SlashCommandBuilder()
 			.setName("get")
 			.setDescription("Get a server configuration option.")
 			.addStringOption((option) =>
-				option.setName("key")
+				option
+					.setName("key")
 					.setDescription("The configuration key you want to get")
 					.setRequired(true)
+					.addChoices([
+						{
+							name: "moderation.automod.enabled",
+							value: "moderation.automod.enabled",
+						},
+						{
+							name: "music.maxvolume",
+							value: "music.maxvolume",
+						},
+						{
+							name: "moderation.automod.lookback",
+							value: "moderation.automod.lookback",
+						},
+						{
+							name: "moderation.automod.logchannel",
+							value: "moderation.automod.logchannel",
+						},
+						{
+							name: "moderation.automod.bypassrole",
+							value: "moderation.automod.bypassrole",
+						},
+						{
+							name: "moderation.automod.disabledcategories",
+							value: "moderation.automod.disabledcategories",
+						},
+					])
 			)
 	)
 	.addSubcommand((subcommand) =>
@@ -42,7 +102,8 @@ export const data = new SlashCommandBuilder()
 			.setName("setraw")
 			.setDescription("Set the raw server configuration.")
 			.addStringOption((option) =>
-				option.setName("value")
+				option
+					.setName("value")
 					.setDescription(
 						"The raw configuration value as a JSON string",
 					)
@@ -64,8 +125,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	const serverId = interaction.guild.id; // Get the ID of the server executing the command
 	const client = interaction.client as ClientExtended;
 
-	const serverData = await getData(client, "config", { serverId: serverId });
-	const oldConfigData: Config = serverData[0]?.config || {};
+	const serverData = await getData(client, "config", {
+		serverid: serverId,
+	}) as ServerConfig[];
+	let serverConf: ServerConfig;
+	if (serverData.length > 0) {
+		serverConf = serverData[0];
+	} else {
+		serverConf = {
+			_id: new ObjectId(),
+			config: {},
+			serverid: serverId,
+		};
+	}
 
 	// Determine which subcommand is called
 	const subcommand = interaction.options.getSubcommand(); // Get subcommand directly
@@ -74,28 +146,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		const key = interaction.options.getString("key", true);
 		const value = interaction.options.getString("value", true);
 
-		let parsedValue: string | number | boolean;
+		let parsedValue;
 		try {
 			parsedValue = JSON.parse(value); // Attempt to parse it
 		} catch {
 			parsedValue = value; // If parsing fails, keep it as a string
 		}
 
-		const configData = {
-			serverId: serverId,
-			config: setNestedKey({ ...oldConfigData }, key, parsedValue),
-		};
+		serverConf.config = setNestedKey(serverConf.config, key, parsedValue);
 
 		try {
-			if (serverData.length > 0) {
-				await setData(client, "config", configData, serverData[0]._id); // Update existing config
-			} else {
-				await setData(client, "config", configData); // Insert new config
-			}
+			await setData(
+				client,
+				"config",
+				serverConf,
+			);
 
 			const embed = new EmbedBuilder()
 				.setTitle("Server Configuration Updated")
-				.setColor("#2b2d31")
+				.setColor(0x9A2D7D)
 				.setTimestamp()
 				.addFields(
 					{ name: "Your Key", value: key, inline: true },
@@ -109,11 +178,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				content: "There was an error updating your configuration.",
 			});
 		}
-	} else if (subcommand === "get") { // Handling the 'get' subcommand
-		const key = interaction.options.getString("key", true) as string; // Optional key
+	} else if (subcommand === "get") {
+		// Handling the 'get' subcommand
+		const key = interaction.options.getString("key", true); // Optional key
 		// If a key is specified, return its value
 
-		const value = getNestedKey(oldConfigData, key);
+		const value = getNestedKey(serverConf.config, key);
 
 		if (value) {
 			await interaction.reply({
@@ -122,7 +192,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 		} else {
 			await interaction.reply({ content: `Key \`${key}\` not found.` });
 		}
-	} else if (subcommand === "setraw") { // Handling the 'setraw' subcommand
+	} else if (subcommand === "setraw") {
+		// Handling the 'setraw' subcommand
 		const rawValue = interaction.options.getString("value", true);
 		let parsedData;
 
@@ -136,17 +207,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 			return;
 		}
 
-		const configData = {
-			serverId: serverId,
-			config: parsedData, // Set to the parsed JSON object
-		};
+		serverConf.config = parsedData;
 
 		try {
-			if (serverData.length > 0) {
-				await setData(client, "config", configData, serverData[0]._id); // Update existing raw config
-			} else {
-				await setData(client, "config", configData); // Insert new raw config
-			}
+			await setData(
+				client,
+				"config",
+				serverConf,
+			);
 
 			await interaction.reply({
 				content: "Raw configuration has been updated successfully.",
@@ -157,10 +225,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				content: "There was an error updating your raw configuration.",
 			});
 		}
-	} else if (subcommand === "getraw") { // Handling the 'getraw' subcommand
+	} else if (subcommand === "getraw") {
+		// Handling the 'getraw' subcommand
 		await interaction.reply({
 			content: `Raw configuration: \n\`\`\`json\n${
-				JSON.stringify(oldConfigData, null, 2)
+				JSON.stringify(
+					serverConf.config,
+					null,
+					2,
+				)
 			}\n\`\`\``,
 		});
 	}

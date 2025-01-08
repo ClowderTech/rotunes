@@ -15,9 +15,10 @@ export interface Command {
 
 export interface ClientExtended extends Client {
 	commands: Collection<string, Command>;
-	mongoclient: MongoClient;
 	ollama: Ollama;
+	mongoclient: MongoClient;
 	moonlink: Manager;
+	usersMessaged: string[];
 }
 
 export class UserMadeError extends Error {
@@ -34,4 +35,18 @@ export class UserMadeError extends Error {
 
 		this.name = "UserMadeError";
 	}
+}
+
+export function generateRandomString(length: number): string {
+	const characters =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	let result = "";
+	const charactersLength = characters.length;
+
+	for (let i = 0; i < length; i++) {
+		const randomIndex = Math.floor(Math.random() * charactersLength);
+		result += characters.charAt(randomIndex);
+	}
+
+	return result;
 }

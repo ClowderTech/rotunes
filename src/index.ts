@@ -8,6 +8,7 @@ import {
 	GatewayIntentBits,
 	Guild,
 	type Interaction,
+	MessageFlags,
 	REST,
 	Routes,
 	SlashCommandBuilder,
@@ -26,19 +27,20 @@ import { MongoClient } from "mongodb";
 
 import { promises as fsPromises } from "node:fs";
 
+import { Ollama } from "ollama";
+
 import { join } from "node:path";
 import { prettyExpGain } from "./utils/leveling.ts";
-
-import { Ollama } from "ollama";
 
 const client: ClientExtended = new Client({
 	intents: [
 		GatewayIntentBits.AutoModerationConfiguration,
 		GatewayIntentBits.AutoModerationExecution,
+		GatewayIntentBits.DirectMessagePolls,
 		GatewayIntentBits.DirectMessageReactions,
 		GatewayIntentBits.DirectMessageTyping,
 		GatewayIntentBits.DirectMessages,
-		GatewayIntentBits.GuildEmojisAndStickers,
+		GatewayIntentBits.GuildExpressions,
 		GatewayIntentBits.GuildIntegrations,
 		GatewayIntentBits.GuildInvites,
 		GatewayIntentBits.GuildMembers,
@@ -55,6 +57,8 @@ const client: ClientExtended = new Client({
 	],
 }) as ClientExtended;
 
+client.usersMessaged = [];
+
 client.moonlink = new Manager({
 	nodes: [
 		{
@@ -68,8 +72,7 @@ client.moonlink = new Manager({
 		},
 	],
 	options: {
-		NodeLinkFeatures: true,
-		previousInArray: true,
+		defaultPlatformSearch: "youtubemusic",
 	},
 	sendPayload: (guildId: string, payload: string) => {
 		const guild = client.guilds.cache.get(guildId);
@@ -77,17 +80,12 @@ client.moonlink = new Manager({
 	},
 });
 
-// Event: Node created
-client.moonlink.on("nodeCreate", (node) => {
-	console.log(`${node.host} was connected, and the magic is in the air`);
-});
-
 client.moonlink.on("nodeError", (node, error) => {
 	console.error(`Node ${node.host} emitted an error: ${error}`);
 });
 
 client.moonlink.on("trackEnd", async (player) => {
-	const channel = await client.channels.cache.get(player.voiceChannelId) ||
+	const channel = client.channels.cache.get(player.voiceChannelId) ||
 		(await client.channels.fetch(player.voiceChannelId));
 	if (
 		channel &&
@@ -99,38 +97,17 @@ client.moonlink.on("trackEnd", async (player) => {
 	}
 });
 
+const headers = {
+	"Authorization": `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
+} as HeadersInit;
+
 client.commands = new Collection();
 client.ollama = new Ollama({
-	host: "https://ollama.clowdertech.com",
+	host: Deno.env.get("OPENAI_BASE_URL"),
+	headers: headers,
 });
 client.mongoclient = new MongoClient(Deno.env.get("MONGODB_URI")!);
 client.mongoclient.connect();
-
-// client.moonlink = new MoonlinkManager(
-//     [
-//         {
-//             host: process.env.LAVALINK_HOST,
-//             port: Number(process.env.LAVALINK_PORT),
-//             secure: true,
-//             password: process.env.LAVALINK_PASSWORD,
-//         }
-//     ],
-//     {
-//         autoResume: true,
-//     },
-//     (guildID: any, sPayload: any) => {
-//         client.guilds.cache.get(guildID)!.shard.send(JSON.parse(sPayload));
-//     }
-// );
-
-// // Event: Node created
-// client.moonlink.on("nodeCreate", node => {
-//     console.log(`${node.host} was connected, and the magic is in the air`);
-// });
-
-// client.moonlink.on("nodeError", (node, error) => {
-//     console.error(`Node ${node.host} emitted an error: ${error}`);
-// });
 
 // Check if file is valid JS or TS file
 function checkForValidFile(file: string): boolean {
@@ -186,9 +163,13 @@ async function loadEvents(eventsPath: string): Promise<void> {
 		const event = await import(file);
 
 		if (event.once) {
-			client.once(event.eventType, (...args) => {
+			client.once(event.eventType, async (...args) => {
 				if (args && Array.isArray(args)) {
-					event.execute(...args);
+					try {
+						await event.execute(...args);
+					} catch (error: unknown) {
+						console.error(error);
+					}
 				} else {
 					console.error(
 						"Expected args to be an array, but received:",
@@ -197,9 +178,13 @@ async function loadEvents(eventsPath: string): Promise<void> {
 				}
 			});
 		} else {
-			client.on(event.eventType, (...args) => {
+			client.on(event.eventType, async (...args) => {
 				if (args && Array.isArray(args)) {
-					event.execute(...args);
+					try {
+						await event.execute(...args);
+					} catch (error: unknown) {
+						console.error(error);
+					}
 				} else {
 					console.error(
 						"Expected args to be an array, but received:",
@@ -244,24 +229,32 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 
 		if (error instanceof Error) {
 			embed = new EmbedBuilder()
-				.setTitle(`${error.name}: ${error.message}`)
-				.setColor(0xff0000);
+				.setTitle(`${error.name}: ${error.message}`.substring(0, 255))
+				.setColor(0x1E90FF);
 			if (
 				interaction.guild &&
 				interaction.guild.id === "1185316093078802552"
 			) {
-				embed = embed.setDescription(`\`\`\`${error.stack}\`\`\``);
+				embed = embed.setDescription(
+					`\`\`\`${error.stack?.substring(0, 4085)}\`\`\``,
+				);
 			}
 		} else {
 			embed = new EmbedBuilder()
-				.setTitle(`Error: ${error}`)
-				.setColor(0xff0000);
+				.setTitle(`Error: ${error}`.substring(0, 255))
+				.setColor(0x1E90FF);
 		}
 
 		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ embeds: [embed], ephemeral: true });
+			await interaction.followUp({
+				embeds: [embed],
+				flags: [MessageFlags.Ephemeral],
+			});
 		} else {
-			await interaction.reply({ embeds: [embed], ephemeral: true });
+			await interaction.reply({
+				embeds: [embed],
+				flags: [MessageFlags.Ephemeral],
+			});
 		}
 	}
 });
@@ -285,11 +278,17 @@ function areCommandsRegistered(
 		);
 
 		if (!registeredCommand) {
+			console.log(
+				`Command ${actualCommand.name} not registered`,
+			);
 			return true; // Command doesn't exist in registered
 		}
 
 		// Compare descriptions
 		if (registeredCommand.description !== actualCommand.description) {
+			console.log(
+				`Command description mismatch for command ${actualCommand.name}: expected "${actualCommand.name}", got "${registeredCommand.name}"`,
+			);
 			return true; // Mismatch on description
 		}
 
@@ -299,6 +298,9 @@ function areCommandsRegistered(
 
 		// Compare number of options
 		if (actualOptions.length !== registeredOptions.length) {
+			console.log(
+				`Options length mismatch for command ${actualCommand.name}: expected "${actualOptions.length}", got "${registeredOptions.length}"`,
+			);
 			return true; // Mismatch on number of options
 		}
 
@@ -310,6 +312,9 @@ function areCommandsRegistered(
 			);
 
 			if (!registeredOption) {
+				console.log(
+					`Option ${actualOption.name} not registered for command ${actualCommand.name}`,
+				);
 				return true; // Mismatch because option doesn't exist in registered
 			}
 
@@ -321,13 +326,31 @@ function areCommandsRegistered(
 				? registeredOption.required
 				: false; // Assume false if undefined
 
-			if (
-				actualOption.name !== registeredOption.name ||
-				actualOption.description !== registeredOption.description ||
-				actualRequired !== registeredRequired || // Use our defined logic
-				actualOption.type !== registeredOption.type
-			) {
-				return true; // Option properties do not match
+			if (actualOption.name !== registeredOption.name) {
+				console.log(
+					`Option name mismatch for command ${actualCommand.name}: expected "${actualOption.name}", got "${registeredOption.name}"`,
+				);
+				return true;
+			}
+			if (actualOption.description !== registeredOption.description) {
+				console.log(
+					`Option ${actualOption.name} description mismatch for command ${actualCommand.name}: expected "${actualOption.description}", got "${registeredOption.description}"`,
+				);
+				return true;
+			}
+
+			if (actualOption.type !== registeredOption.type) {
+				console.log(
+					`Option ${actualOption.name} type mismatch for command ${actualCommand.name}: expected "${actualOption.type}", got "${registeredOption.type}"`,
+				);
+				return true;
+			}
+
+			if (actualRequired !== registeredRequired) {
+				console.log(
+					`Option ${actualOption.name} required mismatch for command ${actualCommand.name}: expected "${actualRequired}", got "${registeredRequired}"`,
+				);
+				return true;
 			}
 		}
 	}
@@ -415,9 +438,7 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
 	client.moonlink.init(client.user!.id);
 });
 
-client.on("raw", (data) => {
-	client.moonlink.packetUpdate(data); // Passing raw data to Moonlink.js for handling
-});
+client.on("raw", (d) => client.moonlink.packetUpdate(d));
 
 async function getVoiceChannelMembers(guild: Guild) {
 	// Get all voice and stage channels in the guild
@@ -427,23 +448,20 @@ async function getVoiceChannelMembers(guild: Guild) {
 			channel.type === ChannelType.GuildStageVoice,
 	);
 
-	for (const [_channelId, channel] of voiceChannels) {
+	for (const channelArray of voiceChannels) {
+		const channel = channelArray[1];
+
 		if (
 			channel instanceof VoiceChannel ||
 			channel instanceof StageChannel
 		) {
 			for (const member of channel.members.values()) {
 				if (
-					!member.voice.deaf &&
+					!member.voice.selfDeaf &&
 					!member.voice.mute &&
 					!(member.voice.channelId === member.guild.afkChannelId)
 				) {
-					await prettyExpGain(client, member.user);
-				} else if (
-					!member.voice.deaf &&
-					!(member.voice.channelId === member.guild.afkChannelId)
-				) {
-					await prettyExpGain(client, member.user, 0.2);
+					await prettyExpGain(client, member.user, guild, channel);
 				}
 			}
 		}
@@ -458,9 +476,14 @@ setInterval(() => {
 	});
 }, 60000); // 60000 milliseconds = 1 minute
 
+setInterval(() => {
+	client.usersMessaged = [];
+}, 60000);
+
 function gracefulShutdown() {
 	console.log("Received shutdown signal, closing Discord client...");
 	client.mongoclient.close();
+	client.ollama.abort();
 	client
 		.destroy()
 		.then(() => {
@@ -476,4 +499,4 @@ function gracefulShutdown() {
 Deno.addSignalListener("SIGINT", gracefulShutdown);
 Deno.addSignalListener("SIGTERM", gracefulShutdown);
 
-client.login(Deno.env.get("BOT_TOKEN"));
+client.login(Deno.env.get("DISCORD_TOKEN"));
