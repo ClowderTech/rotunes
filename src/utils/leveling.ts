@@ -172,7 +172,7 @@ export async function prettyExpGain(
 	// Check if the user leveled up
 	if (newLevel > currentLevel) {
 		const embed = new EmbedBuilder()
-			.setColor(0x9A2D7D) // Changed color to a more vibrant green
+			.setColor(0x1E90FF)
 			.setTitle("🎉 Congratulations! 🎉") // Added icons to the title
 			.setDescription(
 				`<@!${userId}>, you leveled up to level ${newLevel} in ${channel.url}! 🎊\n\n-# If you don't want these messages, execute </userconf set:${
@@ -218,6 +218,50 @@ export async function prettyExpGain(
 					`Could not send DM to ${user.displayName}:`,
 					error,
 				);
+			}
+		}
+
+		if (guildId === "601117178896580608") {
+			const level10Role = guild?.roles.cache.find((role) =>
+				role.id === "1203119410982690906"
+			);
+			const level20Role = guild?.roles.cache.find((role) =>
+				role.id === "1203119407749013574"
+			);
+			const level40Role = guild?.roles.cache.find((role) =>
+				role.id === "1203119402527105074"
+			);
+			const level60Role = guild?.roles.cache.find((role) =>
+				role.id === "1203119393370939412"
+			);
+
+			const member = guild?.members.cache.get(user.id);
+
+			if (newLevel >= 60) {
+				await member?.roles.add(level10Role!).catch();
+				await member?.roles.add(level20Role!).catch();
+				await member?.roles.add(level40Role!).catch();
+				await member?.roles.add(level60Role!).catch();
+			} else if (newLevel >= 40) {
+				await member?.roles.add(level10Role!).catch();
+				await member?.roles.add(level20Role!).catch();
+				await member?.roles.add(level40Role!).catch();
+				await member?.roles.remove(level60Role!).catch();
+			} else if (newLevel >= 20) {
+				await member?.roles.add(level10Role!).catch();
+				await member?.roles.add(level20Role!).catch();
+				await member?.roles.remove(level40Role!).catch();
+				await member?.roles.remove(level60Role!).catch();
+			} else if (newLevel >= 10) {
+				await member?.roles.add(level10Role!).catch();
+				await member?.roles.remove(level20Role!).catch();
+				await member?.roles.remove(level40Role!).catch();
+				await member?.roles.remove(level60Role!).catch();
+			} else {
+				await member?.roles.remove(level10Role!).catch();
+				await member?.roles.remove(level20Role!).catch();
+				await member?.roles.remove(level40Role!).catch();
+				await member?.roles.remove(level60Role!).catch();
 			}
 		}
 	}
