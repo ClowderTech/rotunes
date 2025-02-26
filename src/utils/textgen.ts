@@ -1,5 +1,5 @@
 import type { ChatRequest, ChatResponse, Message, Ollama } from "ollama";
-import { ClientExtended } from "./classes.ts";
+import type { ClientExtended } from "./classes.ts";
 
 export type SyncOrAsyncFunction = (
 	...args: string[]
