@@ -8,7 +8,7 @@ import {
 import { LuauExecutionApi } from "openblox/cloud";
 import { pollMethod } from "openblox/helpers";
 import { setConfig } from "openblox/config";
-import { ClientExtended } from "../../utils/classes.ts";
+import type { ClientExtended } from "../../utils/classes.ts";
 import { scanMessage } from "../../utils/textgen.ts";
 
 export const data = new SlashCommandBuilder()
@@ -40,9 +40,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	client = interaction.client as ClientExtended;
 
 	const luauCode = interaction.options.getString("luau", true);
-	const apiKey = Deno.env.get("ROBLOX_API_KEY");
-	const universeId = Number(Deno.env.get("ROBLOX_UNIVERSE_ID")!);
-	const placeId = Number(Deno.env.get("ROBLOX_PLACE_ID")!);
+	const apiKey = process.env.ROBLOX_API_KEY!;
+	const universeId = Number(process.env.ROBLOX_UNIVERSE_ID!);
+	const placeId = Number(process.env.ROBLOX_PLACE_ID!);
 
 	setConfig({
 		cloudKey: apiKey,
