@@ -16,4 +16,4 @@ bun run index.ts
 
 In progress typescript replacement for rotunes. Originally was in python.
 
->>>>>>> 68fd00ff344b802abc3ec6ffe07296f353659a22
+> > > > > > > 68fd00ff344b802abc3ec6ffe07296f353659a22

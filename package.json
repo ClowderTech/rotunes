@@ -11,20 +11,20 @@
 		"fixlint": "eslint --fix . && prettier --write . && tsc --noEmit",
 		"updateall": "ncu -u && npm install"
 	},
-        "dependencies": {
-        "@discordjs/builders": "^1.10.1",
-        "@discordjs/voice": "^0.18.0",
-        "discord-api-types": "^0.37.119",
-        "discord.js": "^14.18.0",
-        "domutils": "^3.2.2",
-        "jsdom": "^26.0.0",
-        "mongodb": "^6.15.0",
-        "moonlink.js": "^4.4.36",
-        "ollama": "^0.5.14",
-        "openblox": "^1.0.59",
-        "sharp": "^0.34.0",
-        "texsvg": "^2.3.1"
-    },
+	"dependencies": {
+		"@discordjs/builders": "^1.10.1",
+		"@discordjs/voice": "^0.18.0",
+		"discord-api-types": "^0.37.119",
+		"discord.js": "^14.18.0",
+		"domutils": "^3.2.2",
+		"jsdom": "^26.0.0",
+		"mongodb": "^6.15.0",
+		"moonlink.js": "^4.4.36",
+		"ollama": "^0.5.14",
+		"openblox": "^1.0.59",
+		"sharp": "^0.34.0",
+		"texsvg": "^2.3.1"
+	},
 	"devDependencies": {
 		"@eslint/js": "^9.24.0",
 		"eslint": "^9.24.0",

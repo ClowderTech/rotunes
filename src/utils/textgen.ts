@@ -8,7 +8,7 @@ export type SyncOrAsyncFunction = (
 export async function chatWithFuncs(
 	ollama: Ollama,
 	request: ChatRequest,
-	functions: Record<string, SyncOrAsyncFunction> = {},
+	functions: Record<string, SyncOrAsyncFunction> = {}
 ): Promise<{ full_response: Message[]; chat_response: ChatResponse }> {
 	// Initialize full response with the initial messages
 	const full_response: Message[] = request.messages || [];
@@ -31,13 +31,11 @@ export async function chatWithFuncs(
 			const func = functions[element.function.name];
 			if (func) {
 				// Optimized: Directly await the function call
-				toolCallResponse +=
-					`Function "${element.function.name}" executed and returned: "${await func(
-						...Object.values(element.function.arguments),
-					)}"\n`;
+				toolCallResponse += `Function "${element.function.name}" executed and returned: "${await func(
+					...Object.values(element.function.arguments)
+				)}"\n`;
 			} else {
-				toolCallResponse +=
-					`Function "${element.function.name}" not found.\n`;
+				toolCallResponse += `Function "${element.function.name}" not found.\n`;
 			}
 		}
 
@@ -67,7 +65,7 @@ export async function convertBlobToUint8Array(blob: Blob): Promise<Uint8Array> {
 
 export async function scanMessage(
 	client: ClientExtended,
-	input: string,
+	input: string
 ): Promise<boolean> {
 	input = input.normalize().trim();
 
