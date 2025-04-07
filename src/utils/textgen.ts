@@ -10,6 +10,7 @@ export interface ChatData {
 	_id: ObjectId;
 	userid: string;
 	messages: Message[];
+	images: Uint8Array[];
 }
 
 export async function chatWithFuncs(
@@ -123,4 +124,28 @@ export async function scanMessage(
 	}
 
 	return false;
+}
+
+export async function imageAsk(
+	client: ClientExtended,
+	image: string,
+	imageList: Uint8Array[],
+	question: string
+): Promise<string> {
+	const imageNum = parseInt(image.replace("image", ""));
+
+	const imageRaw = imageList[imageNum];
+
+	const { chat_response } = await chatWithFuncs(client.ollama, {
+		model: "gemma3:12b",
+		messages: [
+			{
+				role: "user",
+				content: question,
+				images: [imageRaw],
+			},
+		],
+	});
+
+	return chat_response.message.content.normalize().trim();
 }

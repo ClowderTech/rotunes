@@ -13,6 +13,7 @@ import {
 	type ChatData,
 	chatWithFuncs,
 	convertBlobToUint8Array,
+	imageAsk,
 	verifySafeChat,
 } from "../../utils/textgen.ts";
 import type { ChatRequest, Message } from "ollama";
@@ -348,6 +349,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 	// Step 3: Create the prefix string
 	const textPrefix: string = "\n\nText Attachments:\n\n";
+	const imagePrefix: string =
+		"\n\nImage attachments (please use your imageask tool call to describe it):\n\n";
 
 	// Step 4: Initialize newMessage with the original message
 	let newMessage: string = message;
@@ -378,14 +381,31 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 						"You are RoTunes, a helpful AI powered discord bot made by the Rodevs. You are here to help people with their problems (more specifically roblox issues). Your own website is https://www.rodevs.com/. Please make sure to use your tools and function calls whenever useful. You can search the internet, scrape websites, and execute luau (Roblox) code.",
 				},
 			],
+			images: [],
 		};
+	}
+
+	if (attachmentURLs.length > 0) {
+		const attachmentsURLsNames: string[] = [];
+
+		for (
+			let i = 0;
+			i != attachmentURLs.length + user_data.images.length;
+			i++
+		) {
+			attachmentsURLsNames.push(`image${i}`);
+		}
+
+		const attachmentURLsString = attachmentsURLsNames.join(", ");
+		newMessage += imagePrefix + attachmentURLsString;
+
+		user_data.images.push(...attachmentURLs);
 	}
 
 	// Step 4: Push structuredContent into user_data.messages
 	const newMessageJson: Message = {
 		role: "user",
 		content: newMessage,
-		images: attachmentURLs,
 	};
 
 	user_data.messages.push(newMessageJson);
@@ -397,7 +417,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	}
 
 	const request: ChatRequest = {
-		model: "MrScarySpaceCat/gemma3-tools:12b",
+		model: "qwen2.5-coder:14b",
 		messages: user_data.messages,
 		tools: [
 			{
@@ -453,13 +473,43 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 					},
 				},
 			},
+			{
+				type: "function",
+				function: {
+					name: "imageask",
+					description:
+						"Answers a question about an image provided to you.",
+					parameters: {
+						type: "object",
+						properties: {
+							image: {
+								type: "string",
+								description: "The name of the image.",
+							},
+							question: {
+								type: "string",
+								description: "The question you want to ask.",
+							},
+						},
+						required: ["image", "question"],
+					},
+				},
+			},
 		],
 	};
+
+	async function askAboutImage(
+		image: string,
+		question: string
+	): Promise<string> {
+		return await imageAsk(client, image, user_data.images, question);
+	}
 
 	const functions = {
 		scrape: scrapeWebsite,
 		eval: executeEval,
 		search: searchGoogle,
+		imageask: askAboutImage,
 	};
 
 	const { full_response, chat_response } = await chatWithFuncs(
