@@ -391,7 +391,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	user_data.messages.push(newMessageJson);
 
 	if (await verifySafeChat(client, user_data.messages)) {
-		throw new UserMadeError("The messages in this chat seem to be inappropriate. Please try a different prompt or execute /chatreset")
+		throw new UserMadeError(
+			"The messages in this chat seem to be inappropriate. Please try a different prompt or execute /chatreset"
+		);
 	}
 
 	const request: ChatRequest = {
@@ -469,7 +471,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	user_data.messages = full_response;
 
 	if (await verifySafeChat(client, user_data.messages)) {
-		throw new UserMadeError("The messages in this chat seem to be inappropriate. Please try a different prompt or execute /chatreset")
+		throw new UserMadeError(
+			"The messages in this chat seem to be inappropriate. Please try a different prompt or execute /chatreset"
+		);
 	}
 
 	await setData(client, "textgen", user_data);
