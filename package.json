@@ -23,7 +23,8 @@
 		"ollama": "^0.5.14",
 		"openblox": "^1.0.59",
 		"sharp": "^0.34.0",
-		"texsvg": "^2.3.1"
+		"texsvg": "^2.3.1",
+		"puppeteer": "^24.6.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.24.0",

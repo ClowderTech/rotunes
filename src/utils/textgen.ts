@@ -1,9 +1,16 @@
 import type { ChatRequest, ChatResponse, Message, Ollama } from "ollama";
 import type { ClientExtended } from "./classes.ts";
+import type { ObjectId } from "mongodb";
 
 export type SyncOrAsyncFunction = (
 	...args: string[]
 ) => string | Promise<string>;
+
+export interface ChatData {
+	_id: ObjectId;
+	userid: string;
+	messages: Message[];
+}
 
 export async function chatWithFuncs(
 	ollama: Ollama,
@@ -61,6 +68,30 @@ export async function convertBlobToUint8Array(blob: Blob): Promise<Uint8Array> {
 		console.error("Error converting to Uint8Array:", error);
 		throw error;
 	}
+}
+
+export async function verifySafeChat(
+	client: ClientExtended,
+	input: Message[]
+): Promise<boolean> {
+	const { chat_response } = await chatWithFuncs(client.ollama, {
+		model: "llama-guard3:8b",
+		messages: input,
+	});
+
+	const response = chat_response.message.content.normalize().trim();
+
+	if (response.includes("unsafe")) {
+		const reason = response.replace("unsafe", "").trim();
+
+		if (reason === "S14") {
+			return false;
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 export async function scanMessage(
