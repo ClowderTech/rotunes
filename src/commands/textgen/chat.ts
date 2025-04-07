@@ -417,7 +417,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	}
 
 	const request: ChatRequest = {
-		model: "qwen2.5-coder:14b",
+		model: "qwen2.5:14b",
 		messages: user_data.messages,
 		tools: [
 			{
