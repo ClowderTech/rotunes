@@ -429,67 +429,6 @@ client.once(Events.ClientReady, async (readyClient: Client) => {
 
 client.on("raw", (d) => client.moonlink.packetUpdate(d));
 
-// Usage in your client event
-client.once(Events.ClientReady, async (readyClient: Client) => {
-	console.log(`Logged in as ${readyClient.user?.tag}!`);
-
-	const commandsPath = join(import.meta.dirname!, "commands");
-	const devCommandsPath = join(import.meta.dirname!, "devCommands");
-
-	const commands = await loadCommands(commandsPath);
-	const devCommands = await loadCommands(devCommandsPath);
-	const allCommands = { ...commands, ...devCommands };
-
-	// Convert the allCommands object to an array of its values
-	const allCommandsData = Object.values(allCommands).map(
-		(command) => command.data
-	);
-
-	// Fetch all registered commands
-	const registeredCommands = await fetchRegisteredCommands(
-		readyClient.user!.id
-	);
-
-	// Proceed to use registeredCommands as needed...
-	if (areCommandsRegistered(allCommandsData, registeredCommands)) {
-		try {
-			console.log(
-				"Detected mismatches in command definitions. Refreshing application (/) commands."
-			);
-
-			const rest = new REST().setToken(client.token!);
-
-			await rest.put(Routes.applicationCommands(client.user!.id), {
-				body: Object.values(commands).map((command) =>
-					command.data.toJSON()
-				),
-			});
-
-			await rest.put(
-				Routes.applicationGuildCommands(
-					client.user!.id,
-					"1185316093078802552"
-				),
-				{
-					body: Object.values(devCommands).map((command) =>
-						command.data.toJSON()
-					),
-				}
-			);
-
-			console.log("Successfully reloaded application (/) commands.");
-		} catch (error) {
-			console.error(error);
-		}
-	} else {
-		console.log("No changes detected in registered commands.");
-	}
-
-	client.moonlink.init(client.user!.id);
-});
-
-client.on("raw", (d) => client.moonlink.packetUpdate(d));
-
 async function getVoiceChannelMembers(guild: Guild) {
 	// Get all voice and stage channels in the guild
 	const voiceChannels = guild.channels.cache.filter(
