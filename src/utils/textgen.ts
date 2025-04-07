@@ -77,7 +77,7 @@ export async function verifySafeChat(
 ): Promise<boolean> {
 	const { chat_response } = await chatWithFuncs(client.ollama, {
 		model: "llama-guard3:8b",
-		messages: input,
+		messages: structuredClone(input),
 	});
 
 	const response = chat_response.message.content.normalize().trim();
