@@ -47,7 +47,7 @@ export async function getMemberExperience(
 	client: ClientExtended,
 	memberId: string,
 	serverId: string
-) {
+): Promise<number> {
 	const users = await getData(client, "leveling", {
 		userid: memberId,
 		serverid: serverId,
@@ -59,7 +59,7 @@ export async function getMemberLevel(
 	client: ClientExtended,
 	memberId: string,
 	serverId: string
-) {
+): Promise<number> {
 	const users = await getData(client, "leveling", {
 		userid: memberId,
 		serverid: serverId,
@@ -74,7 +74,7 @@ export async function updateMemberStats(
 	serverId: string,
 	newExperience: number,
 	newLevel: number
-) {
+): Promise<void> {
 	// Step 1: Fetch existing user data
 	const users = (await getData(client, "leveling", {
 		userid: memberId,
@@ -211,6 +211,50 @@ export async function prettyExpGain(
 					`Could not send DM to ${user.displayName}:`,
 					error
 				);
+			}
+		}
+
+		const level10Role = guild?.roles.cache.find((role) =>
+			role.id === "1203119410982690906"
+		);
+		const level20Role = guild?.roles.cache.find((role) =>
+			role.id === "1203119407749013574"
+		);
+		const level40Role = guild?.roles.cache.find((role) =>
+			role.id === "1203119402527105074"
+		);
+		const level60Role = guild?.roles.cache.find((role) =>
+			role.id === "1203119393370939412"
+		);
+
+		const member = guild?.members.cache.get(user.id);
+
+		if (guildId === "601117178896580608") {
+			if (newLevel >= 60) {
+				await member?.roles.add(level10Role!).catch();
+				await member?.roles.add(level20Role!).catch();
+				await member?.roles.add(level40Role!).catch();
+				await member?.roles.add(level60Role!).catch();
+			} else if (newLevel >= 40) {
+				await member?.roles.add(level10Role!).catch();
+				await member?.roles.add(level20Role!).catch();
+				await member?.roles.add(level40Role!).catch();
+				await member?.roles.remove(level60Role!).catch();
+			} else if (newLevel >= 20) {
+				await member?.roles.add(level10Role!).catch();
+				await member?.roles.add(level20Role!).catch();
+				await member?.roles.remove(level40Role!).catch();
+				await member?.roles.remove(level60Role!).catch();
+			} else if (newLevel >= 10) {
+				await member?.roles.add(level10Role!).catch();
+				await member?.roles.remove(level20Role!).catch();
+				await member?.roles.remove(level40Role!).catch();
+				await member?.roles.remove(level60Role!).catch();
+			} else {
+				await member?.roles.remove(level10Role!).catch();
+				await member?.roles.remove(level20Role!).catch();
+				await member?.roles.remove(level40Role!).catch();
+				await member?.roles.remove(level60Role!).catch();
 			}
 		}
 	}
