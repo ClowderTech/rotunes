@@ -20,9 +20,8 @@ interface UserLeveling {
 
 // Function to calculate experience gain
 export function calculateExpGain(multiplier: number = 1): number {
-	return (
-		Math.floor(Math.abs(Math.sqrt(Math.random() * 100) - 10) * multiplier) +
-		1
+	return Math.floor(
+		(Math.abs(Math.sqrt(Math.random() * 100) - 10) + 1) * multiplier
 	);
 }
 
@@ -214,17 +213,17 @@ export async function prettyExpGain(
 			}
 		}
 
-		const level10Role = guild?.roles.cache.find((role) =>
-			role.id === "1203119410982690906"
+		const level10Role = guild?.roles.cache.find(
+			(role) => role.id === "1203119410982690906"
 		);
-		const level20Role = guild?.roles.cache.find((role) =>
-			role.id === "1203119407749013574"
+		const level20Role = guild?.roles.cache.find(
+			(role) => role.id === "1203119407749013574"
 		);
-		const level40Role = guild?.roles.cache.find((role) =>
-			role.id === "1203119402527105074"
+		const level40Role = guild?.roles.cache.find(
+			(role) => role.id === "1203119402527105074"
 		);
-		const level60Role = guild?.roles.cache.find((role) =>
-			role.id === "1203119393370939412"
+		const level60Role = guild?.roles.cache.find(
+			(role) => role.id === "1203119393370939412"
 		);
 
 		const member = guild?.members.cache.get(user.id);
