@@ -59,13 +59,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 				inline: true,
 			},
 			{
-				name: "Bot Owner",
+				name: "Bot Administrators",
 				value: "<@!1208479777900470344>",
 				inline: true,
 			},
 			{
 				name: "Bot Developers",
 				value: "<@!1250923829761675336>",
+				inline: true,
+			},
+			{
+				name: "Bot Contributers",
+				value: "<@!1139185365597573180>, <@!593897486943518748>",
 				inline: true,
 			},
 			{
