@@ -14,14 +14,14 @@
 	"dependencies": {
 		"@discordjs/builders": "^1.11.1",
 		"@discordjs/voice": "^0.18.0",
-		"discord-api-types": "^0.38.1",
-		"discord.js": "^14.19.1",
+		"discord-api-types": "^0.38.2",
+		"discord.js": "^14.19.2",
 		"domutils": "^3.2.2",
 		"jsdom": "^26.1.0",
 		"mongodb": "^6.16.0",
-		"moonlink.js": "^4.4.62",
+		"moonlink.js": "^4.6.3",
 		"ollama": "^0.5.15",
-		"openblox": "^1.0.60",
+		"openblox": "1.0.59",
 		"sharp": "^0.34.1",
 		"texsvg": "^2.3.1",
 		"puppeteer": "^24.7.2"
@@ -33,7 +33,7 @@
 		"jiti": "^2.4.2",
 		"prettier": "^3.5.3",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.31.0"
+		"typescript-eslint": "^8.31.1"
 	},
 	"engines": {
 		"node": ">=16.0.0"
