@@ -7,7 +7,10 @@ import {
 
 import { LuauExecutionApi } from "openblox/cloud";
 import { pollMethod } from "openblox/helpers";
-import { setConfig } from "openblox/config";
+import {
+	setDefaultOpenbloxConfig,
+	createOpenbloxConfig,
+} from "openblox/config";
 import type { ClientExtended } from "../../utils/classes.ts";
 import { scanMessage } from "../../utils/textgen.ts";
 
@@ -44,9 +47,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	const universeId = Number(process.env.ROBLOX_UNIVERSE_ID!);
 	const placeId = Number(process.env.ROBLOX_PLACE_ID!);
 
-	setConfig({
-		cloudKey: apiKey,
-	});
+	setDefaultOpenbloxConfig(
+		createOpenbloxConfig({
+			cloudKey: apiKey,
+		})
+	);
 
 	const { data } = await LuauExecutionApi.executeLuau({
 		universeId: universeId,

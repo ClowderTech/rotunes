@@ -12,28 +12,28 @@
 		"updateall": "ncu -u && npm install"
 	},
 	"dependencies": {
-		"@discordjs/builders": "^1.11.1",
+		"@discordjs/builders": "^1.11.2",
 		"@discordjs/voice": "^0.18.0",
-		"discord-api-types": "^0.38.2",
-		"discord.js": "^14.19.2",
+		"discord-api-types": "^0.38.11",
+		"discord.js": "^14.19.3",
 		"domutils": "^3.2.2",
 		"jsdom": "^26.1.0",
-		"mongodb": "^6.16.0",
-		"moonlink.js": "^4.6.3",
-		"ollama": "^0.5.15",
-		"openblox": "1.0.59",
-		"sharp": "^0.34.1",
+		"mongodb": "^6.17.0",
+		"moonlink.js": "^4.6.18",
+		"ollama": "^0.5.16",
+		"openblox": "1.0.62",
+		"sharp": "^0.34.2",
 		"texsvg": "^2.3.1",
-		"puppeteer": "^24.7.2"
+		"puppeteer": "^24.10.1"
 	},
 	"devDependencies": {
-		"@eslint/js": "^9.25.1",
-		"eslint": "^9.25.1",
-		"globals": "^16.0.0",
+		"@eslint/js": "^9.28.0",
+		"eslint": "^9.28.0",
+		"globals": "^16.2.0",
 		"jiti": "^2.4.2",
 		"prettier": "^3.5.3",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.31.1"
+		"typescript-eslint": "^8.34.0"
 	},
 	"engines": {
 		"node": ">=16.0.0"

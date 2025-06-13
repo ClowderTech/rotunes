@@ -105,6 +105,8 @@ web_modules/
 .env.test.local
 .env.production.local
 .env.local
+.env.cluster
+.env.bridge
 
 # parcel-bundler cache (https://parceljs.org/)
 
@@ -173,11 +175,4 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store
-
-package-lock.json
-
-bun.lockb
-
-.data
-
-deno.lock
+node_modules

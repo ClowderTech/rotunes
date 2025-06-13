@@ -19,7 +19,10 @@ import {
 import type { ChatRequest, Message } from "ollama";
 import { getData, setData } from "../../utils/mongohelper.ts";
 import { EmbedBuilder } from "@discordjs/builders";
-import { setConfig } from "openblox/config";
+import {
+	setDefaultOpenbloxConfig,
+	createOpenbloxConfig,
+} from "openblox/config";
 import { LuauExecutionApi } from "openblox/cloud";
 import { pollMethod } from "openblox/helpers";
 
@@ -131,9 +134,11 @@ async function executeEval(code: string): Promise<string> {
 	const universeId = Number(process.env.ROBLOX_UNIVERSE_ID!);
 	const placeId = Number(process.env.ROBLOX_PLACE_ID!);
 
-	setConfig({
-		cloudKey: apiKey,
-	});
+	setDefaultOpenbloxConfig(
+		createOpenbloxConfig({
+			cloudKey: apiKey,
+		})
+	);
 
 	const { data } = await LuauExecutionApi.executeLuau({
 		universeId: universeId,
