@@ -19,7 +19,7 @@
 		"domutils": "^3.2.2",
 		"jsdom": "^26.1.0",
 		"mongodb": "^6.17.0",
-		"moonlink.js": "^4.6.18",
+		"moonlink.js": "^4.28.32",
 		"ollama": "^0.5.16",
 		"openblox": "1.0.62",
 		"sharp": "^0.34.3",
