@@ -49,36 +49,14 @@ export async function execute(
 	let player = client.moonlink.players.get(guildId);
 
 	if (!player) {
-		try {
-			player = client.moonlink.players.create({
-				guildId,
-				voiceChannelId: voiceChannel.id,
-				textChannelId: interaction.channel.id,
-				volume: 100,
-				autoPlay: false,
-				autoLeave: true,
-			});
-		} catch (error) {
-			if (error instanceof TypeError) {
-				client.moonlink.nodes.cache.forEach(async (node) => {
-					const responding = await node.checkHealth();
-					if (!responding.responding || node.needsRestart()) {
-						node.reconnect();
-					}
-				});
-
-				setTimeout(function () {}, 3000);
-
-				player = client.moonlink.players.create({
-					guildId,
-					voiceChannelId: voiceChannel.id,
-					textChannelId: interaction.channel.id,
-					volume: 100,
-					autoPlay: false,
-					autoLeave: true,
-				});
-			}
-		}
+		player = client.moonlink.players.create({
+			guildId,
+			voiceChannelId: voiceChannel.id,
+			textChannelId: interaction.channel.id,
+			volume: 100,
+			autoPlay: false,
+			autoLeave: true,
+		});
 	}
 
 	if (!player.connected) {
