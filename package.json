@@ -19,12 +19,12 @@
 		"domutils": "^3.2.2",
 		"jsdom": "^26.1.0",
 		"mongodb": "^6.18.0",
-		"moonlink.js": "^4.52.2",
+		"moonlink.js": "^4.60.4",
 		"ollama": "^0.5.16",
 		"openblox": "1.0.62",
 		"sharp": "^0.34.3",
 		"texsvg": "^2.3.1",
-		"puppeteer": "^24.15.0"
+		"puppeteer": "^24.16.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.32.0",
