@@ -167,16 +167,14 @@ async function executeEval(code: string): Promise<string> {
 		taskId: data.taskId,
 	});
 
-	return `${afterData.error ? "Execution Errored!" : "Execution Successful!"}\n\nResults:\n${
-		afterData.error
-			? `\`\`\`${afterData.error.code}: ${afterData.error.message.substring(
-					0,
-					1004
-				)}\`\`\``
-			: `\`\`\`${
-					afterData.output.results.join("\n") || "No Output"
-				}\`\`\``
-	}\n\nLogs:\n${logs[0].messages.join("\n") || "No Output"}`;
+	return `${afterData.error ? "Execution Errored!" : "Execution Successful!"}\n\nResults:\n${afterData.error
+		? `\`\`\`${afterData.error.code}: ${afterData.error.message.substring(
+			0,
+			1004
+		)}\`\`\``
+		: `\`\`\`${afterData.output.results.join("\n") || "No Output"
+		}\`\`\``
+		}\n\nLogs:\n${logs[0].messages.join("\n") || "No Output"}`;
 }
 
 async function searchGoogle(query: string): Promise<string> {
@@ -422,7 +420,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 	}
 
 	const request: ChatRequest = {
-		model: "qwen2.5-coder:14b",
+		model: "gpt-oss:20b",
 		messages: user_data.messages,
 		tools: [
 			{
