@@ -78,7 +78,6 @@ client.moonlink = new Manager({
 		autoResume: true,
 		disableNativeSources: true,
 		movePlayersOnReconnect: true,
-		nodeHealthCheckInterval: 60,
 	},
 	sendPayload: (guildId: string, payload: string) => {
 		const guild = client.guilds.cache.get(guildId);
@@ -469,16 +468,16 @@ async function getVoiceChannelMembers(guild: Guild) {
 						guild,
 						channel,
 						1 *
-							(member.voice.streaming ||
+						(member.voice.streaming ||
 							(!member.voice.deaf && !member.voice.mute)
-								? 2
-								: 1) *
-							Number(
-								getNestedKey(
-									configData,
-									"leveling.expmultiplier"
-								)
+							? 2
+							: 1) *
+						Number(
+							getNestedKey(
+								configData,
+								"leveling.expmultiplier"
 							)
+						)
 					);
 				}
 			}
