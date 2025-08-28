@@ -18,7 +18,7 @@
 		"discord.js": "^14.22.1",
 		"domutils": "^3.2.2",
 		"jsdom": "^26.1.0",
-		"mongodb": "^6.18.0",
+		"mongodb": "^6.19.0",
 		"moonlink.js": "^4.60.4",
 		"ollama": "^0.5.17",
 		"openblox": "1.0.62",
